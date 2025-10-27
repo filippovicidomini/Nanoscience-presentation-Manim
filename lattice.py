@@ -93,6 +93,9 @@ class SiliconLatticeBoron(Scene):
         self.wait(0.2)
         
         
+
+    
+# --- SCENA 4C (pro): RETICOLO Si + B con elettroni, lacuna e elettrone libero ---
 class SiliconLatticeBoronPro(Scene):
     def construct(self):
         # --------- Parameters ---------
@@ -103,11 +106,12 @@ class SiliconLatticeBoronPro(Scene):
         bond_color = GREY_D
         b_color = PURPLE_A
         hole_color = YELLOW
+        e_color = BLUE_E
 
         # --------- Title ---------
         title = VGroup(
             Text("Silicon lattice — Boron acceptor", font_size=36, weight=BOLD),
-            Text("Substitutional B creates a hole (p-type)", font_size=26, slant=ITALIC)
+            Text("Electrons on bonds, hole creation, free electron", font_size=24, slant=ITALIC)
         ).arrange(DOWN, buff=0.1).to_edge(UP)
         self.play(FadeIn(title, shift=DOWN))
 
@@ -125,15 +129,22 @@ class SiliconLatticeBoronPro(Scene):
                 atoms[(i, j)] = d
                 atom_group.add(d)
 
-        # Bonds: right and up-right neighbors
+        # Bonds: right and up-right neighbors (store for electron placement)
         bonds = VGroup()
+        bond_segments = []
         for i in range(rows):
             for j in range(cols):
                 p = pos(i, j)
                 if j + 1 < cols:
-                    bonds.add(Line(p, pos(i, j+1), stroke_width=2, color=bond_color, z_index=-1))
+                    q = pos(i, j+1)
+                    seg = Line(p, q, stroke_width=2, color=bond_color, z_index=-1)
+                    bonds.add(seg)
+                    bond_segments.append((p, q, seg))
                 if i - 1 >= 0 and j + 1 < cols:
-                    bonds.add(Line(p, pos(i-1, j+1), stroke_width=2, color=bond_color, z_index=-1))
+                    q2 = pos(i-1, j+1)
+                    seg2 = Line(p, q2, stroke_width=2, color=bond_color, z_index=-1)
+                    bonds.add(seg2)
+                    bond_segments.append((p, q2, seg2))
 
         self.play(LaggedStartMap(Create, bonds, lag_ratio=0.006, run_time=1.2))
         self.play(LaggedStart(*[FadeIn(a, scale=0.7) for a in atom_group], lag_ratio=0.004, run_time=1.0))
@@ -142,72 +153,90 @@ class SiliconLatticeBoronPro(Scene):
         # --------- Choose substitution site (central) ---------
         ci, cj = rows//2, cols//2
         si_dot = atoms[(ci, cj)]
+        center = si_dot.get_center()
 
         # Glow focus
-        glow = Circle(radius=0.22, color=hole_color).set_stroke(width=5).move_to(si_dot)
+        glow = Circle(radius=0.22, color=hole_color).set_stroke(width=5).move_to(center)
         pulse = glow.copy().set_opacity(0.5)
         self.play(Create(glow), FadeIn(pulse, scale=1.2))
         self.play(pulse.animate.scale(1.8).set_opacity(0), run_time=0.8)
 
-        # Substitute with Boron
-        b_dot = Dot(si_dot.get_center(), radius=0.1, color=b_color)
-        b_label = Text("B", font_size=26, weight=BOLD).move_to(b_dot.get_center()+0.28*UP)
+        # --------- Place electrons on bonds (pairs near midpoints around center) ---------
+        electron_group = VGroup()
+        for (p, q, seg) in bond_segments:
+            mid = (p + q)/2
+            if np.linalg.norm(mid - center) < a*2.2:
+                dir_vec = q - p
+                perp = np.array([-dir_vec[1], dir_vec[0], 0])
+                if np.linalg.norm(perp) == 0:
+                    perp = np.array([0,1,0])
+                perp = perp/np.linalg.norm(perp)*0.06
+                e1 = Dot(mid + perp, radius=0.045, color=e_color)
+                e2 = Dot(mid - perp, radius=0.045, color=e_color)
+                electron_group.add(e1, e2)
+        self.play(LaggedStart(*[FadeIn(e, scale=0.6) for e in electron_group], lag_ratio=0.01, run_time=0.6))
+
+        # --------- Substitute with Boron ---------
+        b_dot = Dot(center, radius=0.1, color=b_color)
+        b_label = Text("B", font_size=26, weight=BOLD).move_to(center+0.28*UP)
         self.play(Transform(si_dot, b_dot), FadeIn(b_label, shift=UP*0.2))
 
-        # --------- Create a hole near B and animate delocalization ---------
-        hole = Circle(radius=0.11, color=hole_color, stroke_width=3).move_to(b_dot.get_center()+0.24*RIGHT)
-        plus = Text("+", font_size=20).move_to(hole.get_center())
+        # --------- Capture one electron by B (acceptor) and create a hole on that bond ---------
+        if len(electron_group) > 0:
+            closest_e = min(electron_group, key=lambda d: np.linalg.norm(d.get_center()-center))
+            prev_pos = closest_e.get_center()
+            self.play(closest_e.animate.move_to(center), run_time=0.6)
+            self.play(FadeOut(closest_e, scale=0.5), run_time=0.3)
+        else:
+            prev_pos = center + RIGHT*0.24
+
+        hole = Circle(radius=0.11, color=hole_color, stroke_width=3).move_to(prev_pos)
+        plus = Text("+", font_size=20).move_to(prev_pos)
         hole_g = VGroup(hole, plus).set_opacity(0.95)
         self.play(FadeIn(hole_g, scale=0.6))
 
-        # Neighbor positions around B
+        # --------- Delocalize the hole around B ---------
         nbr_offsets = [0.24*RIGHT, 0.2*UR, 0.24*UP, 0.2*UL, 0.24*LEFT, 0.2*DL, 0.24*DOWN, 0.2*DR]
         for _ in range(2):
             for off in nbr_offsets:
-                self.play(hole_g.animate.move_to(b_dot.get_center()+off), run_time=0.18)
-        self.play(hole_g.animate.move_to(b_dot.get_center()+0.24*RIGHT), run_time=0.2)
+                self.play(hole_g.animate.move_to(center+off), run_time=0.16)
+        self.play(hole_g.animate.move_to(center+0.24*RIGHT), run_time=0.2)
 
-        # --------- Right inset: simple band diagram (no LaTeX) ---------
-        inset_origin = RIGHT*4.4 + DOWN*0.3
-        width = 3.6
-        # Conduction band Ec and valence band Ev
+        # --------- Right inset: band diagram + electron capture + free electron ---------
+        inset_origin = RIGHT*4.6 + DOWN*0.3
+        width = 3.8
         Ec_y = 1.2
         Ev_y = -1.2
-        Ec = Line(inset_origin + LEFT*width/2 + UP*Ec_y,
-                  inset_origin + RIGHT*width/2 + UP*Ec_y,
-                  color=BLUE_E, stroke_width=4)
-        Ev = Line(inset_origin + LEFT*width/2 + UP*Ev_y,
-                  inset_origin + RIGHT*width/2 + UP*Ev_y,
-                  color=RED_E, stroke_width=4)
-        # Acceptor level EA slightly above Ev
         EA_y = Ev_y + 0.35
-        EA = DashedLine(inset_origin + LEFT*width/2 + UP*EA_y,
-                        inset_origin + RIGHT*width/2 + UP*EA_y,
-                        color=b_color, stroke_width=3, dash_length=0.12, dashed_ratio=0.6)
-        # Labels
+
+        panel = RoundedRectangle(width=width+0.6, height=3.2, corner_radius=0.2).set_opacity(0.10).move_to(inset_origin)
+        Ec = Line(inset_origin + LEFT*width/2 + UP*Ec_y, inset_origin + RIGHT*width/2 + UP*Ec_y, color=BLUE_E, stroke_width=4)
+        Ev = Line(inset_origin + LEFT*width/2 + UP*Ev_y, inset_origin + RIGHT*width/2 + UP*Ev_y, color=RED_E, stroke_width=4)
+        EA = DashedLine(inset_origin + LEFT*width/2 + UP*EA_y, inset_origin + RIGHT*width/2 + UP*EA_y, color=b_color, stroke_width=3, dash_length=0.12, dashed_ratio=0.6)
         lab_Ec = Text("Ec", font_size=26, color=BLUE_E).next_to(Ec, LEFT, buff=0.1)
         lab_Ev = Text("Ev", font_size=26, color=RED_E).next_to(Ev, LEFT, buff=0.1)
         lab_EA = Text("EA (acceptor)", font_size=24, color=b_color).next_to(EA, LEFT, buff=0.1)
-        panel = RoundedRectangle(width=width+0.6, height=3.2, corner_radius=0.2).set_opacity(0.10)
-        panel.move_to(inset_origin)
 
-        self.play(FadeIn(panel))
-        self.play(Create(Ec), Create(Ev))
-        self.play(Create(EA))
+        self.play(FadeIn(panel), Create(Ec), Create(Ev), Create(EA))
         self.play(FadeIn(lab_Ec), FadeIn(lab_Ev), FadeIn(lab_EA))
 
-        # Drop a small dot from EA to Ev to suggest ionization (hole creation)
-        carrier = Dot(color=b_color).move_to(inset_origin + LEFT*0.2 + UP*(EA_y))
-        self.play(FadeIn(carrier, scale=0.6))
-        self.play(carrier.animate.shift(DOWN*(EA_y - Ev_y - 0.08)), run_time=0.8)
+        # Electron captured from Ev to EA (leaves a hole in Ev)
+        e_band = Dot(color=e_color).move_to(inset_origin + LEFT*0.9 + UP*(Ev_y))
+        self.play(FadeIn(e_band, scale=0.6))
+        self.play(e_band.animate.move_to(inset_origin + LEFT*0.4 + UP*(EA_y)), run_time=0.7)
         self.play(Flash(hole_g, flash_radius=0.25, color=hole_color))
-        self.play(FadeOut(carrier), run_time=0.3)
+        self.play(FadeOut(e_band), run_time=0.3)
 
-        # Subtle field arrows (qualitative) pointing from B^- toward hole path
+        # Minority free electron in conduction band (animated motion)
+        free_e = Dot(color=e_color).move_to(inset_origin + LEFT*width/2 + RIGHT*0.25 + UP*(Ec_y))
+        self.play(FadeIn(free_e, scale=0.6))
+        self.play(free_e.animate.move_to(inset_origin + RIGHT*width/2 + LEFT*0.25 + UP*(Ec_y)), run_time=1.2)
+        self.play(free_e.animate.move_to(inset_origin + LEFT*width/2 + RIGHT*0.9 + UP*(Ec_y)), run_time=1.0)
+
+        # Subtle field arrows around B
         arrows = VGroup()
-        for k, off in enumerate(nbr_offsets[::2]):
-            arr = Arrow(b_dot.get_center()+off*0.4, b_dot.get_center()+off*0.8, stroke_width=2, buff=0)
-            arr.set_color(YELLOW_D).set_opacity(0.6)
+        for off in nbr_offsets[::2]:
+            arr = Arrow(center+off*0.4, center+off*0.8, stroke_width=2, buff=0).set_color(YELLOW_D).set_opacity(0.6)
             arrows.add(arr)
         self.play(LaggedStart(*[GrowArrow(a) for a in arrows], lag_ratio=0.2, run_time=1.0))
 
