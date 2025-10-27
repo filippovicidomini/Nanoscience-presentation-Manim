@@ -2,6 +2,10 @@ from manim import *
 import numpy as np
 import random
 
+# set seed for reproducibility
+random.seed(42)
+np.random.seed(42)
+
 # Palette
 SI_COLOR = GRAY_B
 P_COLOR  = BLUE_B
@@ -17,15 +21,47 @@ def make_atom(center, label="Si", color=SI_COLOR, r=0.35):
 
 def bond(p, q):
     seg = Line(p, q, color=WHITE, stroke_width=5)
-    seg.set_opacity(0.25)
+    seg.set_opacity(0.05)
     return seg
 
-def electron_on_bond(p, q, speed=2, radius=0.06, color=E_BOND_COLOR):
-    """Elettrone che rimbalza avanti/indietro sul legame p<->q (moto di legame)."""
+def shrink_segment(p, q, gap):
+    """
+    Restituisce due punti p', q' sul segmento p->q, accorciato di 'gap' a ciascuna estremità.
+    Se il segmento è troppo corto, ritorna p, q senza modifiche.
+    """
+    v = q - p
+    L = np.linalg.norm(v)
+    if L < 2*gap + 1e-2:
+        return p, q
+    u = v / L
+    return p + gap*u, q - gap*u
+
+def electron_on_bond(p, q, speed=0.9, radius=0.06, color=E_BOND_COLOR,
+                     jitter_amp=0.12, jitter_freq=1.5,
+                     core_gap=0.42):
+    """
+    Elettrone di legame che si muove lungo p<->q con piccola ondulazione trasversa,
+    SENZA mai passare sui centri atomici grazie al 'core_gap' che accorcia il segmento.
+    """
+    # Accorcia il segmento per evitare i dischi atomici
+    p_s, q_s = shrink_segment(p, q, core_gap)
+
     d = Dot(radius=radius, color=color)
-    t = ValueTracker(np.random.rand())
+    t = ValueTracker(np.random.rand())   # 0..1 lungo il segmento accorciato
     direction = {"d": 1}
+    phase = random.random() * TAU
+    osc_time = [0.0]
+
+    v = q_s - p_s
+    nv = np.linalg.norm(v)
+    if nv < 1e-9:
+        d.move_to(p_s)
+        return d
+    u = v / nv
+    perp = np.array([-u[1], u[0], 0.0])  # perpendicolare nel piano 2D
+
     def upd(m, dt):
+        # avanzamento con rimbalzo
         new_t = t.get_value() + direction["d"] * speed * dt
         if new_t > 1.0:
             new_t = 2.0 - new_t
@@ -34,10 +70,20 @@ def electron_on_bond(p, q, speed=2, radius=0.06, color=E_BOND_COLOR):
             new_t = -new_t
             direction["d"] *= -1
         t.set_value(new_t)
-        pos = (1-new_t) * p + new_t * q
+
+        # tempo per l’ondulazione
+        osc_time[0] += dt
+
+        # smorzamento dell’ampiezza vicino alle estremità (evita “tocchi” ai cerchi)
+        # s = 0 agli estremi, 1 al centro
+        s = np.sin(np.pi * new_t)**1.2
+        wiggle = (jitter_amp * s) * np.sin(TAU * jitter_freq * osc_time[0] + phase)
+
+        pos = p_s + new_t * v + wiggle * perp
         m.move_to(pos)
+
     d.add_updater(upd)
-    d.move_to((1-t.get_value())*p + t.get_value()*q)
+    d.move_to(p_s + t.get_value() * (q_s - p_s))
     return d
 
 class NTypeNoFieldAttracted2D(Scene):
@@ -93,12 +139,23 @@ class NTypeNoFieldAttracted2D(Scene):
                     bonds.add(bond(p, q)); edges.append((p, q))
 
         # Elettroni sui legami
+        # Elettroni sui legami (due per legame, con parametri leggermente diversi)
         bond_electrons = VGroup()
         for (p, q) in edges:
-            bond_electrons.add(
-                electron_on_bond(p, q, speed=0.9, radius=0.06, color=E_BOND_COLOR),
-                electron_on_bond(q, p, speed=0.9, radius=0.06, color=E_BOND_COLOR)
-            )
+        # uno in un verso, uno nell’altro; ampiezza/frequenza un po’ diverse
+            e1 = electron_on_bond(p, q,
+                          speed=0.9 + 0.15*random.random(),
+                          radius=0.06,
+                          color=E_BOND_COLOR,
+                          jitter_amp=0.15 + 0.1*random.random(),
+                          jitter_freq=1.2 + 0.8*random.random())
+            e2 = electron_on_bond(q, p,
+                          speed=0.9 + 0.15*random.random(),
+                          radius=0.06,
+                          color=E_BOND_COLOR,
+                          jitter_amp=0.10 + 0.1*random.random(),
+                          jitter_freq=1.2 + 0.8*random.random())
+            bond_electrons.add(e1, e2)
 
         # Intro
         self.play(FadeIn(bonds), *[FadeIn(a) for a in atoms], FadeIn(title))
@@ -107,7 +164,7 @@ class NTypeNoFieldAttracted2D(Scene):
 
         # Inseriamo Fosforo (donor) in alto-centro (0,1)
         rP, cP = 2, 2
-        phosphorus = make_atom(centers[rP][cP], label="P", color=P_COLOR)
+        phosphorus = make_atom(centers[rP][cP], label="P", color=PURE_BLUE)
         self.play(Transform(atoms[rP*cols + cP], phosphorus))
 
         # Elettrone extra vicino a P
@@ -192,8 +249,10 @@ class NTypeNoFieldAttracted2D(Scene):
         # Lascia evolvere il moto per un po'
         self.wait(10.0)
 
-        # Nota finale
-        final = Text("Senza campo: l’elettrone donato resta vicino al reticolo\n(moto termico con lieve attrazione ai siti) → corrente netta ≈ 0", font_size=26)\
-                .to_edge(DOWN)
-        self.play(FadeIn(final))
-        self.wait(1.6)
+        
+
+
+        
+        # fade out
+        self.play(FadeOut(VGroup(atoms, bonds, bond_electrons, extra_e, title)))
+        self.wait(0.5)
