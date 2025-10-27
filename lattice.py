@@ -1,6 +1,7 @@
 from manim import *
 import numpy as np
 
+
 # --- SCENA 4: RETICOLO DI SILICIO CON DOPANTE BORO (schematico 2D) ---
 class SiliconLatticeBoron(Scene):
     def construct(self):
@@ -89,7 +90,7 @@ class SiliconLatticeBoron(Scene):
 
         # Sfumatura finale
         self.wait(0.8)
-        self.play(FadeOut(glow))
+        self.play(FadeOut(glow)) 
         self.wait(0.2)
         
         
