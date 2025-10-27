@@ -1,146 +1,113 @@
 from manim import *
-from manim import config
 import numpy as np
-import random
 
-# Forza OpenGL: evita problemi di gradienti Cairo
-config.renderer = "opengl"
+# Palette
+POS = BLUE_C
+NEG = RED_C
+NUC = GRAY_B
 
-POS = BLUE_C      # fase +
-NEG = RED_C       # fase -
-NUCLEUS = GRAY_B
+def to3d(v):
+    v = np.array(v, dtype=float)
+    if v.shape == (2,):
+        v = np.array([v[0], v[1], 0.0])
+    elif v.shape != (3,):
+        # fallback prudente
+        v = np.array([1.0, 0.0, 0.0])
+    return v
 
-# --- Sferiche armoniche reali: l=0,1 (s e p) ---
-def Y_real(l, m, theta, phi):
-    if l == 0:
-        return 0.5/np.sqrt(np.pi) * np.ones_like(theta)
-    if l == 1:
-        c = np.sqrt(3/(4*np.pi))
-        if m == 0:   # p_z ~ cos(theta)
-            return c * np.cos(theta)
-        if m == +1:  # p_x ~ sin(theta) cos(phi)
-            return c * np.sin(theta) * np.cos(phi)
-        if m == -1:  # p_y ~ sin(theta) sin(phi)
-            return c * np.sin(theta) * np.sin(phi)
-    return np.zeros_like(theta)
+def lobo_ellittico(dir_vec=RIGHT, length=2.2, width=1.1, color=POS, alpha=0.42):
+    """
+    Lobo 'tipo orbitale' super leggero: Ellipse allungata orientata lungo dir_vec.
+    dir_vec viene sempre trattato come vettore 3D (z=0 se mancante).
+    """
+    d3 = to3d(dir_vec)
+    n = np.linalg.norm(d3)
+    if n < 1e-9:
+        d3 = np.array([1.0, 0.0, 0.0])
+        n = 1.0
+    d3 /= n
 
-# --- Radiali idrogeno-like (qualitativo): 3s, 3p ---
-def R_nl(n, l, r, a0=1.0):
-    x = r/a0
-    if n == 3 and l == 0:   # 3s: due nodi radiali
-        return (1 - (2*x)/3 + (2*x**2)/27) * np.exp(-x/3)
-    if n == 3 and l == 1:   # 3p: un nodo radiale
-        return (x) * (1 - x/6) * np.exp(-x/3)
-    return np.exp(-r/(n*a0))
+    center = 0.9 * d3  # 3D
+    ell = Ellipse(width=length, height=width, color=color, stroke_width=0)
+    ell.set_fill(color, opacity=alpha)
+    # orienta nel piano xy
+    ang = np.arctan2(d3[1], d3[0])
+    ell.rotate(ang).move_to(center)
+    return ell
 
-# --- Superficie angolare r(θ,φ) ∝ |Y_lm|: mostra lobi e piani nodali (niente gradient) ---
-def angular_lobe_surface(l=1, m=0, scale=1.6, opacity=0.40):
-    def base(u, v):
-        th, ph = u, v
-        Y = Y_real(l, m, th, ph)
-        r = scale * np.abs(Y)
-        x = r * np.sin(th) * np.cos(ph)
-        y = r * np.sin(th) * np.sin(ph)
-        z = r * np.cos(th)
-        return np.array([x, y, z])
+def doppio_lobo(dir_vec=RIGHT, length=2.4, width=1.1, color_pos=POS, color_neg=NEG, alpha=0.42):
+    d3 = to3d(dir_vec)
+    return VGroup(
+        lobo_ellittico(d3,  length, width, color_pos, alpha),
+        lobo_ellittico(-d3, length, width, color_neg, alpha),
+    )
 
-    res = (28, 56)  # moderato per stabilità
+def s_orbital(levels=1, base_radius=0.85):
+    g = VGroup()
+    for k in range(levels):
+        R = base_radius * (1 + 0.45*k)
+        col = POS if k % 2 == 0 else NEG
+        disk = Circle(radius=R, color=col, stroke_width=0).set_fill(col, opacity=0.18 if k == 0 else 0.10)
+        g.add(disk)
+    nuc = Circle(radius=0.10, color=NUC, stroke_width=0).set_fill(NUC, opacity=0.6)
+    g.add(nuc)
+    return g
 
-    pos = Surface(
-        lambda u, v: base(u, v) if Y_real(l, m, u, v) >= 0 else np.array([np.nan, np.nan, np.nan]),
-        u_range=[0, PI], v_range=[0, TAU], resolution=res
-    ).set_fill(POS, opacity=opacity).set_stroke(width=0)
+def sp3_quattro_lobi(scale=1.0, alpha=0.42):
+    # Direzioni tetraedriche proiettate (in piano: z=0)
+    dirs = [
+        np.array([+1, +1, 0.0]),
+        np.array([+1, -1, 0.0]),
+        np.array([-1, +1, 0.0]),
+        np.array([-1, -1, 0.0]),
+    ]
+    g = VGroup()
+    for i, d in enumerate(dirs):
+        col = POS if i % 2 == 0 else NEG
+        g.add(lobo_ellittico(d, length=2.3*scale, width=1.1*scale, color=col, alpha=alpha))
+    nuc = Circle(radius=0.10*scale, color=NUC, stroke_width=0).set_fill(NUC, opacity=0.6)
+    g.add(nuc)
+    return g
 
-    neg = Surface(
-        lambda u, v: base(u, v) if Y_real(l, m, u, v) < 0 else np.array([np.nan, np.nan, np.nan]),
-        u_range=[0, PI], v_range=[0, TAU], resolution=res
-    ).set_fill(NEG, opacity=opacity).set_stroke(width=0)
-
-    return VGroup(pos, neg)
-
-# --- Nuvola punti da |ψ|^2 via rejection sampling ---
-def sample_orbital_points(n=3, l=1, m=0, N=1800, a0=1.0, r_max=8.0, max_trials=180000):
-    pts, signs = [], []
-    def pdf(r, th, ph):
-        Y = Y_real(l, m, th, ph)
-        return (R_nl(n, l, r, a0)**2) * (Y**2) * (r**2) * np.sin(th)
-
-    M = 0.1  # bound iniziale
-    trials = 0
-    while len(pts) < N and trials < max_trials:
-        trials += 1
-        r  = np.random.rand() * r_max
-        th = np.arccos(1 - 2*np.random.rand())   # uniforme sulla sfera
-        ph = np.random.rand() * TAU
-        val = pdf(r, th, ph)
-        if val > M:
-            M = val
-        if np.random.rand() * M < val:
-            x = r * np.sin(th) * np.cos(ph)
-            y = r * np.sin(th) * np.sin(ph)
-            z = r * np.cos(th)
-            pts.append([x, y, z])
-            signs.append(1 if Y_real(l, m, th, ph) >= 0 else -1)
-
-    return np.array(pts, dtype=float), np.array(signs, dtype=int)
-
-def point_cloud_from_orbital(n=3, l=1, m=0, N=1800, scale=0.45, dot_r=0.03):
-    P, S = sample_orbital_points(n, l, m, N=N)
-    P = P * scale
-    grp = VGroup()
-    for i in range(P.shape[0]):
-        d = Sphere(radius=dot_r).move_to(P[i])
-        d.set_fill(POS if S[i] > 0 else NEG, opacity=0.95).set_stroke(width=0)
-        grp.add(d)
-    return grp
-
-class QMSiliconLikeOrbitalsSafe(ThreeDScene):
+class QMOrbitalsUltraLite2D(Scene):
     def construct(self):
         self.camera.background_color = "#0b0e10"
-        self.set_camera_orientation(phi=65*DEGREES, theta=35*DEGREES)
 
-        # ROOT per "zoom" robusto (scala il gruppo invece della camera)
-        ROOT = VGroup()
-        self.add(ROOT)
+        col_x = [-4.5, 0.0, +4.5]
+        row_y = [+1.8, -2.0]
 
-        # Nucleo
-        nucleus = Sphere(radius=0.12).set_fill(NUCLEUS, opacity=0.5).set_stroke(width=0)
-        ROOT.add(nucleus)
+        s1 = s_orbital(levels=1, base_radius=0.95).move_to(np.array([col_x[0], row_y[0], 0]))
+        s2 = s_orbital(levels=2, base_radius=0.80).move_to(np.array([col_x[0], row_y[1], 0]))
 
-        # 3s: nuvola doppio guscio (nodo radiale), superficie angolare isotropa tenue
-        cloud_3s_inner = point_cloud_from_orbital(n=3, l=0, m=0, N=900,  scale=0.22, dot_r=0.028)
-        cloud_3s_outer = point_cloud_from_orbital(n=3, l=0, m=0, N=1100, scale=0.42, dot_r=0.028)
-        s_shell = angular_lobe_surface(l=0, m=0, scale=1.0, opacity=0.12)
-        group_3s = VGroup(s_shell, cloud_3s_inner, cloud_3s_outer)
-        ROOT.add(group_3s)
+        px = doppio_lobo(RIGHT,      length=2.6, width=1.1).move_to(np.array([col_x[1], row_y[0], 0]))
+        py = doppio_lobo(UP,         length=2.6, width=1.1).move_to(np.array([col_x[1], row_y[1], 0]))
+        pz = doppio_lobo(RIGHT+UP,   length=2.6, width=1.1).move_to(np.array([col_x[2], row_y[0], 0]))
 
-        # 3p_z: superficie angolare + nuvola con piano nodale
-        pz_surface = angular_lobe_surface(l=1, m=0, scale=1.8, opacity=0.40)
-        cloud_3p   = point_cloud_from_orbital(n=3, l=1, m=0, N=2200, scale=0.60, dot_r=0.028)
+        sp3 = sp3_quattro_lobi(scale=1.0, alpha=0.42).move_to(np.array([col_x[2], row_y[1], 0]))
 
-        # Mostra 3s
-        self.play(FadeIn(nucleus))
-        self.play(FadeIn(group_3s))
-        self.wait(0.8)
+        self.play(FadeIn(s1, shift=0.2*UP), FadeIn(s2, shift=0.2*DOWN), run_time=0.6)
+        self.play(FadeIn(px, shift=0.2*LEFT), FadeIn(py, shift=0.2*DOWN), run_time=0.6)
+        self.play(FadeIn(pz, shift=0.2*UP), FadeIn(sp3, shift=0.2*RIGHT), run_time=0.6)
 
-        # “Zoom” dolce via ROOT (compatibile ovunque)
-        self.play(ROOT.animate.scale(1.1), run_time=0.6)
+        # opzionale: leggerissima pulsazione dei lobi
+        # opzionale: leggerissima pulsazione dei lobi
+        amp = 0.03
+        t = ValueTracker(0.0)
 
-        # Passa a 3p_z
-        self.play(FadeOut(group_3s, run_time=0.7))
-        ROOT.add(pz_surface, cloud_3p)
-        self.play(FadeIn(pz_surface, run_time=0.7))
-        self.play(FadeIn(cloud_3p, run_time=0.5))
-        self.wait(1.0)
+        def breathe_opacity(_mobj, dt):   # updater di Mobject: (mobj, dt)
+            t.increment_value(dt)
+            k = 0.40 + amp*np.sin(TAU*0.5*t.get_value())
+            for grp in [px, py, pz, sp3]:
+                for l in grp:
+                    if isinstance(l, VMobject):
+                        l.set_fill(l.get_color(), opacity=k)
 
-        # Mostra rapidamente p_x e p_y (rotazioni tramite ReplacementTransform)
-        px_surface = angular_lobe_surface(l=1, m=+1, scale=1.8, opacity=0.40)
-        py_surface = angular_lobe_surface(l=1, m=-1, scale=1.8, opacity=0.40)
-        self.play(ReplacementTransform(pz_surface.copy(), px_surface), run_time=0.6)
-        self.play(ReplacementTransform(px_surface.copy(), py_surface), run_time=0.6)
-        self.play(ReplacementTransform(py_surface.copy(), pz_surface), run_time=0.6)
-        self.wait(0.5)
+        # crea un “ticker” invisibile a cui attaccare l’updater
+        ticker = VMobject()
+        self.add(ticker)
+        ticker.add_updater(breathe_opacity)
 
-        # Uscita pulita
-        self.play(FadeOut(cloud_3p), FadeOut(pz_surface), FadeOut(nucleus))
-        self.wait(0.3)
+        self.wait(1.8)
+
+        # (facoltativo) pulisci alla fine
+        ticker.remove_updater(breathe_opacity)
