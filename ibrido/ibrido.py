@@ -25,11 +25,11 @@ except ImportError:
         return np.real(Y)
 
 # -------- Parametri principali --------
-n, l, m = 4, 2, 0        # 3p_z (cambia qui: p_x -> (3,1,+1), p_y -> (3,1,-1), 3s -> (3,0,0))
+n, l, m = 5, 2, 0        # 3p_z (cambia qui: p_x -> (3,1,+1), p_y -> (3,1,-1), 3s -> (3,0,0))
 a0      = 1.0
-grid_N  = 256            # 112–160: compromesso qualità/tempo
+grid_N  = 128            # 112–160: compromesso qualità/tempo
 Rmax    = 10.0           # estensione spaziale
-iso     = 3e-2           # livello isosuperficie (aumenta se la mesh è troppo grossa)
+iso     = 3e-4           # livello isosuperficie (aumenta se la mesh è troppo grossa)
 
 # -------- Griglia cartesiana --------
 xs = np.linspace(-Rmax, Rmax, grid_N)

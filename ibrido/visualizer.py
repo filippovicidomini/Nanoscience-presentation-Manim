@@ -19,7 +19,7 @@ class ShowOrbitalOBJ(ThreeDScene):
         # centra e scala la mesh
         V -= V.mean(axis=0)                   # centra sull’origine
         max_r = np.max(np.linalg.norm(V, axis=1))
-        scale = 1                           # <-- fattore di riduzione (0.5 = metà)
+        scale = 1.5                           # <-- fattore di riduzione (0.5 = metà)
         if max_r > 1e-9:
             V *= (scale * 3.5 / max_r)        # porta il raggio ~3.5 e poi riduci con 'scale'
 
@@ -40,6 +40,6 @@ class ShowOrbitalOBJ(ThreeDScene):
             ).set_fill(BLUE_C, opacity=0.6)
             tris.add(poly)
 
-        self.play(FadeIn(tris))
+        self.play(FadeIn(tris), run_time=4, lag_ratio=0.5)
         self.begin_ambient_camera_rotation(rate=0.15)
-        self.wait(2.5)
+        self.wait(20)
