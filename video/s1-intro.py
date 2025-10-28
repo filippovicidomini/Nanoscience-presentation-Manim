@@ -1,4 +1,5 @@
 from manim import *
+import numpy as np
 
 # Scene 1 — Intro
 # Manim Community Edition ≥ 0.18
@@ -15,6 +16,11 @@ class S1Intro(Scene):
             slant=ITALIC,
             color="#E6EDF3",
         ).to_edge(UP, buff=0.6)
+
+        name_text = Text("Filippo Vicidomini", font_size=34, color="#9FB1C7")
+        course_text = Text("Nanoscience and Nanotechnology", font_size=28, color="#7F93A8")
+        # in basso al frame
+        meta = VGroup(name_text, course_text).arrange(LEFT, buff=0.12).next_to(DOWN*3+LEFT*5, buff=0.8)
 
         # Piccolo motivo grafico: un “atomo” stilizzato con 4 elettroni di valenza
         atom_group = self.make_atom_motif(level_counts=[2,8,4], base_radius=0.7, radius_step=0.55)
@@ -37,26 +43,31 @@ class S1Intro(Scene):
 
         
         # Intro animations
+        # start spin immediately so it runs during fade-ins and bullet writes
+        self.start_spin(atom_group, omega=4.0)
         self.play(
             LaggedStart(
                 Write(title),
-                #FadeIn(meta, shift=0.15*DOWN),
-                FadeIn(atom_group, shift=0.2*UP, scale=0.95),
-                run_time=2.0,
-                lag_ratio=0.2,
+                FadeIn(meta, shift=0.15*DOWN),
+                FadeIn(atom_group, scale=0.95),
+                
+                run_time=10.0,
+                lag_ratio=0.8,
             )
         )
+        #self.play(FadeIn(atom_group, shift=0.2*UP, scale=0.95), run_time=2.0)
         
-        self.play(LaggedStart(*[Write(b) for b in bullets], lag_ratio=0.15, run_time=3))
+        self.play(LaggedStart(*[Write(b) for b in bullets], lag_ratio=0.15, run_time=6))
 
-        # Rotazione morbida: ruota i gruppi di elettroni in senso alternato
-        spin = [Rotate(g, angle=(2*PI if i%2==0 else -2*PI)) for i, g in enumerate(atom_group.electron_groups)]
-        self.play(*spin, run_time=6, rate_func=linear)
+        # Atom is already spinning via updaters; no additional Rotate needed.
 
         # Outro della scena (senza tagline)
-        self.wait(0.8)
+        self.wait(2)
+        # stop spin before fading out to avoid updater warnings
+        self.stop_spin(atom_group)
         self.play(*[FadeOut(m) for m in [title, bullets]], FadeOut(atom_group, scale=0.9))
-        self.wait(0.2)
+        self.wait(0.5)
+        self.play(FadeOut(meta, shift=0.15*DOWN), run_time=1.5)
 
     # ——————————————————————————————————————————————————————————————
     def bullet_line(self, text: str, idx: int) -> VGroup:
