@@ -26,8 +26,8 @@ n, l, m = 4, 2, 0
 a0 = 1.00
 grid_N = 160
 Rmax = 20.0
-iso_fraction = 0.1      # frazione del valore massimo per la superficie
-asym = 0.1              # asimmetria dei lobi (1 = simmetrico)
+iso_fraction = 0.32      # frazione del valore massimo per la superficie
+asym = 0.3              # asimmetria dei lobi (1 = simmetrico)
 
 # --- Griglia cartesiana ---
 xs = np.linspace(-Rmax, Rmax, grid_N)
@@ -51,8 +51,8 @@ rho = psi**2
 rho -= rho.min()
 rho /= rho.max()
 
-stretch_z = 1.6    # >1 allunga lungo z
-stretch_xy = 0.4   # <1 stringe sui lati
+stretch_z = 2    # >1 allunga lungo z
+stretch_xy = 1   # <1 stringe sui lati
 
 X_scaled = X * stretch_xy
 Y_scaled = Y * stretch_xy
