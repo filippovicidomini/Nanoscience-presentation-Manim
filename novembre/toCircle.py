@@ -60,17 +60,38 @@ class SiliconLatticeSpin(Scene):
         #    (blob giallini + rimozione
         #     degli elettroni usati)
         # -----------------------------
-        bond_blobs = VGroup()
+        bond_electrons = VGroup()
 
-        def make_bond_blob(p1, p2):
+        def make_bond_pair(p1, p2):
+            """
+            Crea due elettroni di legame attorno al punto medio tra p1 e p2.
+            Restano vicini (separazione fissa), ognuno con la sua oscillazione armonica.
+            """
             mid = 0.5 * (p1 + p2)
-            blob = Ellipse(width=0.35, height=0.22)
-            blob.set_fill("#ffe680", opacity=0.45)
-            blob.set_stroke("#ffe680", opacity=0.9, width=1.5)
-            blob.move_to(mid)
-            # piccola oscillazione armonica attorno alla posizione media
-            self.add_oscillation_to_blob(blob, amplitude=0.02, omega=2.0)
-            return blob
+
+            # direzione lungo il legame
+            dir_vec = p2 - p1
+            dir_vec[2] = 0
+            norm = np.linalg.norm(dir_vec[:2]) or 1.0
+            dir_vec /= norm
+
+            # direzione perpendicolare (dove mettiamo i due elettroni)
+            perp = np.array([-dir_vec[1], dir_vec[0], 0.0])
+
+            sep = 0.18  # distanza dal centro
+            pos1 = mid + sep * perp
+            pos2 = mid - sep * perp
+
+            e1 = Dot(pos1, radius=0.07, color="#6EA8FE")
+            e2 = Dot(pos2, radius=0.07, color="#6EA8FE")
+
+            # oscillazioni armoniche attorno alle posizioni di equilibrio
+            self.add_oscillation_to_bond_electron(e1, base_center=mid, base_offset=sep*perp,
+                                                amplitude=0.03, omega=3.0, phase_shift=0.0)
+            self.add_oscillation_to_bond_electron(e2, base_center=mid, base_offset=-sep*perp,
+                                                amplitude=0.03, omega=3.0, phase_shift=PI)
+
+            return VGroup(e1, e2)
 
         # Legami orizzontali: RIGHT del sinistro, LEFT del destro
         for i in range(rows):
@@ -81,19 +102,16 @@ class SiliconLatticeSpin(Scene):
                 e_left = a_left.e_by_dir["right"]
                 e_right = a_right.e_by_dir["left"]
 
-                blob = make_bond_blob(
-                    a_left.get_center(),
-                    a_right.get_center()
-                )
+              
+
+                pair = make_bond_pair(a_left.get_center(), a_right.get_center())
 
                 self.play(
-                FadeIn(blob, scale=0.4),
-                run_time=0.2
+                    FadeIn(pair, scale=0.4),
+                    run_time=0.2
                 )
 
-                #bond_blobs.add(blob)
-
-                bond_blobs.add(blob)
+                bond_electrons.add(pair)
 
         # Legami verticali: DOWN del sopra, UP del sotto
         for i in range(rows - 1):
@@ -104,32 +122,25 @@ class SiliconLatticeSpin(Scene):
                 e_top = a_top.e_by_dir["down"]
                 e_bottom = a_bottom.e_by_dir["up"]
 
-                blob = make_bond_blob(
-                    a_top.get_center(),
-                    a_bottom.get_center()
-                )
+               
+
+                pair = make_bond_pair(a_top.get_center(), a_bottom.get_center())
 
                 self.play(
-                FadeIn(blob, scale=0.4),
-                run_time=0.2
+                    FadeIn(pair, scale=0.4),
+                    run_time=0.2
                 )
 
-                bond_blobs.add(blob)
-
-                bond_blobs.add(blob)
-        
-                # Dopo aver creato TUTTI i legami (orizzontali e verticali)
+                
+        # Dopo aver creato TUTTI i legami (orizzontali e verticali)
         # rimuoviamo tutti gli elettroni dal reticolo in un colpo solo
         all_electrons = VGroup()
         for i in range(rows):
             for j in range(cols):
-                # fermiamo gli updaters sugli elettroni (spin + browniano)
                 atom_grid[i][j].electrons.clear_updaters()
                 all_electrons.add(atom_grid[i][j].electrons)
 
         self.play(FadeOut(all_electrons), run_time=1.0)
-
-        self.wait(2.0)
         self.wait(2.0)
 
         # -----------------------------
@@ -141,10 +152,10 @@ class SiliconLatticeSpin(Scene):
             for j in range(cols):
                 cores.add(atom_grid[i][j].core)
 
-        full_lattice = VGroup(cores, bond_blobs)
+        full_lattice = VGroup(cores, bond_electrons)
 
         self.play(Indicate(full_lattice, scale_factor=1.02), run_time=2.0)
-        self.wait(2.0)
+        self.wait(5.0)
 
     # -----------------------------
     # HELPER: atomo con 4 elettroni di valenza
@@ -253,3 +264,45 @@ class SiliconLatticeSpin(Scene):
             mobj.move_to(base + offset)
 
         blob.add_updater(updater)
+        
+    def add_oscillation_to_bond_electron(
+        self,
+        dot: Mobject,
+        base_center: np.ndarray,
+        base_offset: np.ndarray,
+        amplitude: float = 0.03,
+        omega: float = 3.0,
+        phase_shift: float = 0.0,
+        noise_amp: float = 0.01,
+    ):
+        """
+        Oscillazione armonica per un singolo elettrone di legame.
+        Rimane in media vicino a base_center + base_offset (niente drift),
+        con piccola oscillazione lungo la direzione perpendicolare al legame.
+        """
+        base_center = np.array(base_center)
+        base_offset = np.array(base_offset)
+        t = [0.0]
+
+        # direzione di oscillazione = stessa direzione di base_offset, normalizzata
+        perp = base_offset.copy()
+        if np.linalg.norm(perp[:2]) == 0:
+            perp = np.array([1.0, 0.0, 0.0])
+        perp = perp / np.linalg.norm(perp[:2])
+
+        def updater(mobj, dt,
+                    amp=amplitude,
+                    w=omega,
+                    ph=phase_shift,
+                    center=base_center,
+                    off=base_offset,
+                    direction=perp,
+                    noise=noise_amp):
+            t[0] += dt
+            osc = amp * np.sin(w * t[0] + ph)
+            jitter = noise * np.random.normal(size=3)
+            jitter[2] = 0.0
+            new_pos = center + off + osc * direction + jitter
+            mobj.move_to(new_pos)
+
+        dot.add_updater(updater)
