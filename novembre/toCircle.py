@@ -15,9 +15,8 @@ class SiliconLatticeSpin(Scene):
         self.start_spin(central_atom, omega_spin=2.5)
 
         self.play(FadeIn(central_atom, scale=1), run_time=1.5)
-        self.wait(1.0)
         #self.play(central_atom.animate.scale(1), run_time=1.0)
-        self.wait(0.5)
+        self.wait(6.5)
 
         # -----------------------------
         # 2) RETICOLO 2D PIÙ GRANDE
@@ -53,7 +52,7 @@ class SiliconLatticeSpin(Scene):
                 run_time=2.5
             )
         )
-        self.wait(1.0)
+        self.wait(5.5)
 
         # -----------------------------
         # 3) FORMAZIONE DEI LEGAMI
@@ -141,7 +140,7 @@ class SiliconLatticeSpin(Scene):
                 all_electrons.add(atom_grid[i][j].electrons)
 
         self.play(FadeOut(all_electrons), run_time=1.0)
-        self.wait(2.0)
+        self.wait(4.0)
 
         # -----------------------------
         # 4) HIGHLIGHT FINALE
@@ -155,7 +154,7 @@ class SiliconLatticeSpin(Scene):
         full_lattice = VGroup(cores, bond_electrons)
 
         self.play(Indicate(full_lattice, scale_factor=1.02), run_time=2.0)
-        self.wait(5.0)
+        self.wait(10.0)
 
     # -----------------------------
     # HELPER: atomo con 4 elettroni di valenza
