@@ -1,7 +1,7 @@
 
 #set par(justify: true)
 #set par(first-line-indent: 1.5em)
-#set text(size: 14pt)
+#set text(size: 14pt, font: "Libertinus Serif")
 #set page(numbering: "1")
 #set document(
   title: [From Doping Semiconductors \n to PN junctions],
@@ -182,3 +182,8 @@ which act as mobile positive carriers.
 In the band picture,
 this corresponds to empty states near the top of the valence band,
 where electrons can easily move into.”
+
+
+#pagebreak()
+#set bibliography(full: true, title: "References")
+#bibliography("../Nanomaterials-Presentation.bib")
