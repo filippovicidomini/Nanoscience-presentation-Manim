@@ -13,7 +13,7 @@ class PNJunctionForwardBiasWithDopants(Scene):
         cols = 4
         spacing = 1.8
         
-        # Centri dei due reticoli (già vicini)
+        # Centri dei due reticoli
         origin_n = LEFT * 1.8 
         origin_p = RIGHT * 1.8
 
@@ -27,56 +27,43 @@ class PNJunctionForwardBiasWithDopants(Scene):
             rows, cols, spacing, origin=origin_p
         )
 
-        # Creazione legami di interfaccia (ponte tra N e P)
+        # Legami di interfaccia
         interface_pairs = VGroup()
         for i in range(rows):
             left_atom = atom_grid_n[i][cols - 1]
             right_atom = atom_grid_p[i][0]
-            # Usiamo la tua funzione make_bond dinamica
             b = self.make_bond(left_atom, right_atom, (i, cols-1), (i, 0), sep=0.18)
             interface_pairs.add(b["pair"])
 
-        # --- MODIFICA: AGGIUNTA ATOMI DROGANTI VISIBILI ---
-        # Coordinate scelte per spargere i droganti
-        dopants_n_coords = [(1, 1), (2, 2), (0, 2)]
-        dopants_p_coords = [(3, 2), (3, 1), (4, 2)]
+        # --- AGGIUNTA ATOMI DROGANTI VISIBILI ---
+        dopants_n_coords = [(1, 1), (3, 2), (0, 3)]
+        dopants_p_coords = [(1, 2), (3, 1), (4, 0)]
 
-        # Applica stile donatori (Fosforo - Arancione) su N
+        # Donatori (Fosforo - Arancione) su N
         for (i, j) in dopants_n_coords:
             atom = atom_grid_n[i][j]
             p_nucleus = Circle(radius=0.28, color=ORANGE, fill_opacity=1.0).set_stroke(width=0)
             p_nucleus.move_to(atom.nucleus.get_center())
-            # Sostituiamo il nucleo verde con quello arancione istantaneamente
             atom.nucleus.become(p_nucleus)
-            # Aggiungo etichetta "P" per chiarezza
-            p_label = Text("P", font_size=22, color=WHITE).move_to(atom.nucleus)
-            atom.add(p_label)
+            # Rimossa etichetta "P" per eleganza
 
-        # Applica stile accettori (Boro - Viola) su P
+        # Accettori (Boro - Viola) su P
         for (i, j) in dopants_p_coords:
             atom = atom_grid_p[i][j]
             b_nucleus = Circle(radius=0.22, color=PURPLE_C, fill_opacity=1.0).set_stroke(width=0)
             b_nucleus.move_to(atom.nucleus.get_center())
-            # Sostituiamo nucleo
             atom.nucleus.become(b_nucleus)
-            # Aggiungo etichetta "B"
-            b_label = Text("B", font_size=22, color=WHITE).move_to(atom.nucleus)
-            atom.add(b_label)
+            # Rimossa etichetta "B" per eleganza
         # --------------------------------------------------
 
-
-        # Aggiungiamo tutto alla scena staticamente (stato iniziale)
+        # Aggiunta alla scena
         semiconductor = VGroup(lattice_n, lattice_p, interface_pairs)
         self.add(semiconductor)
-
-        label_n = Text("n-type (Maggioritari: e⁻)", font_size=24, color=BLUE_B).next_to(lattice_n, UP, buff=0.5)
-        label_p = Text("p-type (Maggioritari: h⁺)", font_size=24, color=RED_B).next_to(lattice_p, UP, buff=0.5)
-        self.add(label_n, label_p)
+        # Rimossi label_n e label_p
 
         # -----------------------------
         # 2) VISUALIZZAZIONE DEPLETION REGION INIZIALE
         # -----------------------------
-        # All'equilibrio è larga
         depletion_width_initial = 2.5
         depletion = RoundedRectangle(
             corner_radius=0.25,
@@ -88,9 +75,9 @@ class PNJunctionForwardBiasWithDopants(Scene):
             fill_opacity=0.15,
         ).move_to(ORIGIN)
         
-        dep_label = Text("Barriera di Potenziale (Equilibrio)", font_size=24, color=YELLOW).next_to(depletion, DOWN, buff=0.25)
+        # Rimossa dep_label (testo barriera)
         
-        self.play(FadeIn(depletion), FadeIn(dep_label), run_time=1.0)
+        self.play(FadeIn(depletion), run_time=1.5)
         self.wait(0.5)
 
         # -----------------------------
@@ -110,15 +97,14 @@ class PNJunctionForwardBiasWithDopants(Scene):
             contact_right + UP*1.5
         ])
 
-        # Simbolo Batteria: FORWARD BIAS (+ a destra su P, - a sinistra su N)
+        # Batteria
         battery = self.get_battery_symbol().move_to([0, wire_y, 0])
-        voltage_text = MathTex("V_{bias} > 0", color=GREEN).next_to(battery, UP, buff=0.2)
+        # Rimossa voltage_text
         
         self.play(
             Create(circuit),
             FadeIn(battery),
-            Write(voltage_text),
-            run_time=1.5
+            run_time=2.0
         )
 
         # -----------------------------
@@ -126,28 +112,21 @@ class PNJunctionForwardBiasWithDopants(Scene):
         # -----------------------------
         new_width = 0.6
         
+        # Animazione più lenta e fluida
         self.play(
             depletion.animate.stretch_to_fit_width(new_width).set_fill(opacity=0.05),
-            dep_label.animate.become(Text("Barriera Ridotta!", font_size=24, color=GREEN).move_to(dep_label.get_center())),
-            run_time=2.0,
+            run_time=2.5,
             rate_func=rate_functions.ease_in_out_cubic
         )
         self.wait(0.5)
 
         # -----------------------------
-        # 5) INIEZIONE PORTATORI E CORRENTE (Spiegazione)
+        # 5) INIEZIONE PORTATORI E CORRENTE
         # -----------------------------
-        explanation_title = Text("Iniezione di Portatori Maggioritari", font_size=32, color=WHITE).to_edge(UP, buff=1)
-        explanation_sub = Text("La barriera bassa permette il flusso massiccio di N→P e P→N", font_size=24, color=GRAY).next_to(explanation_title, DOWN)
-        self.play(Write(explanation_title), Write(explanation_sub))
-
-        # Etichette per il flusso
-        e_flow_label = Text("Elettroni (N→P)", font_size=20, color=BLUE_C).move_to(UP*2 + LEFT*3)
-        h_flow_label = Text("Lacune (P→N)", font_size=20, color=YELLOW_C).move_to(UP*2 + RIGHT*3)
-        self.play(FadeIn(e_flow_label), FadeIn(h_flow_label))
+        # Rimossi tutti i titoli esplicativi
         
         # Ciclo di animazione flusso
-        for wave in range(4):
+        for wave in range(5): # Aumentato di 1 ciclo
             electrons = VGroup()
             holes = VGroup()
             
@@ -166,25 +145,25 @@ class PNJunctionForwardBiasWithDopants(Scene):
 
             self.add(electrons, holes)
             
-            # Movimento incrociato attraverso la giunzione
+            # Movimento incrociato
             self.play(
-                electrons.animate.shift(RIGHT * 6.0), # Elettroni vanno a destra
-                holes.animate.shift(LEFT * 6.0),      # Lacune vanno a sinistra
-                run_time=2.0,
+                electrons.animate.shift(RIGHT * 6.5),
+                holes.animate.shift(LEFT * 6.5),
+                run_time=2.2, # Leggermente più lento
                 rate_func=linear
             )
             
-            # Ricombinazione (sparizione nella regione opposta)
+            # Ricombinazione
             self.play(
-                FadeOut(electrons),
-                FadeOut(holes),
-                run_time=0.2
+                FadeOut(electrons, scale=0.8),
+                FadeOut(holes, scale=0.8),
+                run_time=0.3
             )
 
-        # Conclusione
-        current_arrow = Arrow(LEFT*2, RIGHT*2, color=YELLOW, buff=0).next_to(battery, DOWN, buff=0.5)
-        current_text = Text("Grande Corrente Diretta (I)", font_size=28, color=YELLOW).next_to(current_arrow, DOWN)
-        self.play(GrowArrow(current_arrow), Write(current_text))
+        # Conclusione minimalista: solo la freccia della corrente
+        current_arrow = Arrow(LEFT*2, RIGHT*2, color=YELLOW, buff=0, stroke_width=6).next_to(battery, DOWN, buff=0.5)
+        # Rimosso current_text
+        self.play(GrowArrow(current_arrow), run_time=1.5)
         self.wait(3)
 
         # Pulizia finale
@@ -192,19 +171,16 @@ class PNJunctionForwardBiasWithDopants(Scene):
             m.clear_updaters()
 
     # =========================================================
-    # FUNZIONI DI SUPPORTO (TUE, ORIGINALI)
+    # FUNZIONI DI SUPPORTO
     # =========================================================
 
     def get_battery_symbol(self):
-        # Polo lungo (+) a destra, corto (-) a sinistra
         plate_neg = Line(UP*0.15, DOWN*0.15, color=WHITE, stroke_width=4).move_to(LEFT*0.15)
         plate_pos = Line(UP*0.3, DOWN*0.3, color=WHITE, stroke_width=4).move_to(RIGHT*0.15)
         wire_l = Line(LEFT*0.5, plate_neg.get_center(), color=WHITE)
         wire_r = Line(plate_pos.get_center(), RIGHT*0.5, color=WHITE)
-        
-        plus = Tex("+", color=RED, font_size=30).next_to(plate_pos, UP, buff=0.1)
-        minus = Tex("-", color=BLUE, font_size=30).next_to(plate_neg, UP, buff=0.1)
-        return VGroup(wire_l, wire_r, plate_neg, plate_pos, plus, minus)
+        # Rimossi i testi "+" e "-" per eleganza
+        return VGroup(wire_l, wire_r, plate_neg, plate_pos)
 
     def build_lattice_with_bonds(self, rows, cols, spacing, origin=ORIGIN):
         atom_grid = [[None for _ in range(cols)] for _ in range(rows)]
@@ -225,7 +201,6 @@ class PNJunctionForwardBiasWithDopants(Scene):
                 atom_grid[i][j] = atom
                 atoms.add(atom)
 
-        # bond orizzontali
         for i in range(rows):
             for j in range(cols - 1):
                 a_atom = atom_grid[i][j]
@@ -234,7 +209,6 @@ class PNJunctionForwardBiasWithDopants(Scene):
                 bonds.append(b)
                 bond_group.add(b["pair"])
 
-        # bond verticali
         for i in range(rows - 1):
             for j in range(cols):
                 a_atom = atom_grid[i][j]
@@ -301,28 +275,16 @@ class PNJunctionForwardBiasWithDopants(Scene):
             mobj.move_to(mid + base_offset + osc * perp + jitter)
         dot.add_updater(updater)
 
+    # --- MODIFICHE QUI SOTTO PER ELEGANZA ---
+    
     def make_free_electron(self, pos):
+        # Elettrone elegante: solo un semplice punto rosso
         e = Dot(radius=0.085, color=RED).move_to(pos)
-        glow1 = Circle(radius=0.18, stroke_width=2, color=BLUE_C, stroke_opacity=0.8).move_to(pos)
-        glow2 = Circle(radius=0.28, stroke_width=2, color=BLUE_C, stroke_opacity=0.5).move_to(pos)
-
-        def pulse(m, dt):
-            if not hasattr(m, "t"): m.t = 0
-            m.t += dt
-            s = 1.0 + 0.15 * np.sin(3 * m.t)
-            m.set(width=m.width * s)
-
-        glow2.add_updater(pulse)
-        glow1.add_updater(lambda m, dt: m.move_to(e.get_center()))
-        glow2.add_updater(lambda m, dt: m.move_to(e.get_center()))
-
-        label = MathTex("e^-", font_size=26, color=BLUE_C)
-        label.add_updater(lambda m: m.next_to(e, UP, buff=0.12))
-
-        return VGroup(e, glow1, glow2, label)
+        # Rimossi glow1, glow2, pulse updater e label
+        return e
 
     def make_hole(self, pos):
+        # Lacuna elegante: solo anello giallo senza testo
         h = Circle(radius=0.11, stroke_width=4, color=YELLOW_C).move_to(pos)
-        label = MathTex("h^+", font_size=26, color=YELLOW_C)
-        label.add_updater(lambda m: m.next_to(h, UP, buff=0.12))
-        return VGroup(h, label)
+        # Rimossa label
+        return h
