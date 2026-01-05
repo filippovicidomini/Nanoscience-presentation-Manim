@@ -199,9 +199,9 @@ class PNJunctionEnergyBands(Scene):
         # Keep them inside the axes: choose an x close to the right edge of the plot area
         x_label_world = axes.c2p(4.15, 0)[0]
 
-        Ec_lbl = always_redraw(lambda: curve_label("Ec", COL_COND, Ec_eq, x_label_world, offset=RIGHT * 0.35))
-        Ev_lbl = always_redraw(lambda: curve_label("Ev", COL_VAL,  Ev_eq, x_label_world, offset=RIGHT * 0.35))
-        Ef_lbl = always_redraw(lambda: curve_label("Ef", COL_FERMI, Ef_eq, x_label_world, offset=RIGHT * 0.35))
+        Ec_lbl = always_redraw(lambda: curve_label("Ec", COL_COND, Ec_eq, x_label_world, offset=RIGHT * 0.35 + UP * 0.15))
+        Ev_lbl = always_redraw(lambda: curve_label("Ev", COL_VAL,  Ev_eq, x_label_world, offset=RIGHT * 0.35 + DOWN * 0.15))
+        Ef_lbl = always_redraw(lambda: curve_label("Ef", COL_FERMI, Ef_eq, x_label_world, offset=RIGHT * 0.35 + UP * 0.05))
 
         # Push Ef slightly up so it doesn't overlap the band labels when bending is small
         Ef_lbl.add_updater(lambda m: m.shift(UP * 0.25))
@@ -279,7 +279,7 @@ class PNJunctionEnergyBands(Scene):
         self.wait(0.6)  # <-- Voice: "In polarizzazione diretta... abbassa la barriera energetica..."
 
         # Streaming current (particle-like): single carriers emitted one-after-another
-        n_particles = 18
+        n_particles = 100
         lanes_e = [1.75, 1.55, 1.35, 1.15, 0.95, 0.75]
         lanes_h = [-0.65, -0.85, -1.05, -1.25, -1.45, -1.65]
 
@@ -296,12 +296,14 @@ class PNJunctionEnergyBands(Scene):
         self.add(electrons, holes)
 
         def particle_trip(mobj, shift_vec):
-            # appear -> travel -> disappear (reads like a real particle)
+            # appear -> travel -> disappear (symmetric: same fade & scale)
+            t_fade = 0.22
+            t_travel = 0.90
+            s = 0.92
             return Succession(
-                FadeIn(mobj, scale=0.92, run_time=0.12),
-                mobj.animate.shift(shift_vec).set_opacity(1),
-                FadeOut(mobj, scale=0.85, run_time=0.18),
-                run_time=1.20,
+                FadeIn(mobj, scale=s, run_time=t_fade, rate_func=rush_into),
+                mobj.animate.shift(shift_vec).set_opacity(1).set_run_time(t_travel).set_rate_func(rush_into),
+                FadeOut(mobj, scale=s, run_time=t_fade, rate_func=rush_into),
             )
 
         e_anims = [particle_trip(e, RIGHT * 6.9) for e in electrons]
@@ -310,12 +312,12 @@ class PNJunctionEnergyBands(Scene):
         # Staggered start times -> continuous flow (not a block)
         self.play(
             AnimationGroup(
-                LaggedStart(*e_anims, lag_ratio=0.08),
-                LaggedStart(*h_anims, lag_ratio=0.08),
+                LaggedStart(*e_anims, lag_ratio=0.1),
+                LaggedStart(*h_anims, lag_ratio=0.1),
                 lag_ratio=0.0,
             ),
-            rate_func=linear,
-            run_time=3.4,
+            rate_func=rush_into,
+            run_time=7.4,
         )
 
         # Remove particles (clean scene)
