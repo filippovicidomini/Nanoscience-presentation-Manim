@@ -82,9 +82,10 @@ class PNJunctionEnergyBands(Scene):
             FadeIn(label_N),
             FadeIn(label_P),
             FadeIn(stage_title),
-            run_time=1.6
+            run_time=4,
+            lag_ratio=0.8
         )
-        self.wait(0.3)
+        self.wait(2)
 
         # =========================================================
         # 1) PRIMA DEL CONTATTO: due regioni separate con Fermi diversi
@@ -123,7 +124,7 @@ class PNJunctionEnergyBands(Scene):
         self.play(
             Create(Ec_left), Create(Ev_left), Create(Ef_left),
             Create(Ec_right), Create(Ev_right), Create(Ef_right),
-            run_time=2.0
+            run_time=5.0
         )
         # --- Helpers for dynamic curve-following labels ---
         def point_on_curve_near_x(curve: VMobject, x_world: float):
@@ -139,7 +140,7 @@ class PNJunctionEnergyBands(Scene):
             p = point_on_curve_near_x(curve, x_world)
             lbl.move_to(p + offset)
             return lbl
-        self.wait(1.0)  # <-- Voice: "Prima del contatto, ... N Fermi alto, P basso"
+        self.wait(5.0)  # <-- Voice: "Prima del contatto, ... N Fermi alto, P basso"
 
         # =========================================================
         # 2) DOPO IL CONTATTO (EQUILIBRIO): Fermi unico + band bending
@@ -214,7 +215,8 @@ class PNJunctionEnergyBands(Scene):
             ReplacementTransform(Ef_before, Ef_eq),
             ReplacementTransform(Ec_before, Ec_eq),
             ReplacementTransform(Ev_before, Ev_eq),
-            run_time=2.2,
+            run_time=5,
+            lag_ratio=0.8,
             rate_func=rate_functions.ease_in_out_cubic
         )
 
@@ -223,9 +225,9 @@ class PNJunctionEnergyBands(Scene):
             FadeIn(barrier_tag),
             FadeIn(bending_callout),
             GrowArrow(bending_arrow),
-            run_time=0.9
+            run_time=4
         )
-        self.wait(1.3)  # <-- Voice: "Quando mettiamo a contatto... Fermi unico... band bending... campo interno..."
+        self.wait(5)  # <-- Voice: "Quando mettiamo a contatto... Fermi unico... band bending... campo interno..."
 
         # Frase chiave (senza testo in scena, ma lasciamo tempo)
         self.wait(1.2)  # <-- Voice: "La barriera di potenziale nello spazio reale è la stessa che vediamo nello spazio energetico."
@@ -273,13 +275,13 @@ class PNJunctionEnergyBands(Scene):
             FadeIn(fwd_note),
             FadeOut(bending_callout),
             FadeOut(bending_arrow),
-            run_time=2.0,
+            run_time=5.0,
             rate_func=rate_functions.ease_in_out_cubic
         )
-        self.wait(0.6)  # <-- Voice: "In polarizzazione diretta... abbassa la barriera energetica..."
+        self.wait(3)  # <-- Voice: "In polarizzazione diretta... abbassa la barriera energetica..."
 
         # Streaming current (particle-like): single carriers emitted one-after-another
-        n_particles = 100
+        n_particles = 200
         lanes_e = [1.75, 1.55, 1.35, 1.15, 0.95, 0.75]
         lanes_h = [-0.65, -0.85, -1.05, -1.25, -1.45, -1.65]
 
@@ -317,13 +319,13 @@ class PNJunctionEnergyBands(Scene):
                 lag_ratio=0.0,
             ),
             rate_func=rush_into,
-            run_time=7.4,
+            run_time=10.4,
         )
 
         # Remove particles (clean scene)
         self.remove(electrons, holes)
 
-        self.wait(0.8)
+        self.wait(3)
 
         # =========================================================
         # 4) REVERSE BIAS: barriera aumenta, bande più inclinate, flusso bloccato
@@ -353,7 +355,7 @@ class PNJunctionEnergyBands(Scene):
             Transform(Ec_eq, Ec_rev),
             Transform(Ev_eq, Ev_rev),
             Transform(barrier_brace, barrier_brace_rev),
-            run_time=2.0,
+            run_time=4.0,
             rate_func=rate_functions.ease_in_out_cubic
         )
 
@@ -366,8 +368,8 @@ class PNJunctionEnergyBands(Scene):
             Line(axes.c2p(-0.35, -2.2), axes.c2p(0.35, -2.9), color=COL_BLOCK, stroke_width=5),
         ).set_opacity(0.55)
 
-        self.play(FadeIn(block), FadeIn(x_mark), run_time=0.6)
-        self.wait(1.6)  # <-- Voice: "In polarizzazione inversa... barriera aumenta... flusso bloccato."
+        self.play(FadeIn(block), FadeIn(x_mark), run_time=3)
+        self.wait(3)  # <-- Voice: "In polarizzazione inversa... barriera aumenta... flusso bloccato."
 
         # Outro clean
         self.play(
@@ -376,9 +378,9 @@ class PNJunctionEnergyBands(Scene):
             FadeOut(barrier_tag),
             FadeOut(barrier_brace),
             FadeOut(fwd_note),
-            run_time=0.7
+            run_time=3
         )
-        self.wait(0.6)
+        self.wait(1)
 
         # Cleanup updaters (se mai)
         for m in self.mobjects:

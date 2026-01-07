@@ -202,14 +202,15 @@ As a result, very few carriers can cross the junction, leading to a very small c
 
 
 
+= Energy Band Diagram of the PN Junction
+This scene translates the PN junction into the energy-band diagram, where the vertical axis is energy and the horizontal axis is position across the junction.
 
+Before contact, the n-type and p-type regions are still separate. Their conduction and valence bands are flat in each region, but their Fermi levels are different: the n-type side has a higher Fermi level (more electrons available), while the p-type side has a lower Fermi level (more holes).
 
+After contact, at equilibrium, carriers diffuse and leave behind fixed charges in the depletion region. The electrostatic potential that forms inside the junction appears here as band bending: both the conduction band edge and the valence band edge bend across the junction. At equilibrium the system settles into a single, flat Fermi level across the entire device, meaning there is no net current. The vertical brace highlights the potential barrier that carriers must overcome.
 
-
-
-
-
-
+Under forward bias, the external voltage reduces the built-in potential. In the band diagram, that means the bending is weaker and the barrier height decreases. With a lower barrier, carriers can cross the junction more easily: electrons from the n-side and holes from the p-side are injected across, producing a large current.
+Under reverse bias, the external voltage strengthens the built-in potential. The band bending becomes stronger and the barrier increases, widening the depletion region and making carrier injection extremely unlikely. In this condition, the junction blocks current (aside from a tiny leakage current not shown here).
 
 
 
