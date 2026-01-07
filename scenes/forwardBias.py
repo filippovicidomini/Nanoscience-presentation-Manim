@@ -77,8 +77,8 @@ class PNJunctionForwardBiasWithDopants(Scene):
         
         # Rimossa dep_label (testo barriera)
         
-        self.play(FadeIn(depletion), run_time=1.5)
-        self.wait(0.5)
+        self.play(FadeIn(depletion), run_time=2)
+        self.wait(2)
 
         # -----------------------------
         # 3) APPLICAZIONE TENSIONE (BATTERIA)
@@ -115,7 +115,8 @@ class PNJunctionForwardBiasWithDopants(Scene):
             FadeIn(battery),
             FadeIn(minus_label),
             FadeIn(plus_label),
-            run_time=2.0
+            run_time=5.0,
+            lag_ratio=0.5
         )
 
         # -----------------------------
@@ -126,10 +127,10 @@ class PNJunctionForwardBiasWithDopants(Scene):
         # Animazione più lenta e fluida
         self.play(
             depletion.animate.stretch_to_fit_width(new_width).set_fill(opacity=0.05),
-            run_time=2.5,
+            run_time=4,
             rate_func=rate_functions.ease_in_out_cubic
         )
-        self.wait(0.5)
+        self.wait(2)
 
         # -----------------------------
         # 5) INIEZIONE PORTATORI E CORRENTE
@@ -142,8 +143,8 @@ class PNJunctionForwardBiasWithDopants(Scene):
             holes = VGroup()
             
             # Generazione ai lati opposti
-            for k in range(3):
-                y = (k - 1) * 1.2
+            for k in range(5):
+                y = (k - 2) * 1.2
                 # Elettrone parte da N (sinistra)
                 start_e = lattice_n.get_left() + RIGHT*0.5 + UP*y
                 e_mob = self.make_free_electron(start_e)
@@ -160,7 +161,7 @@ class PNJunctionForwardBiasWithDopants(Scene):
             self.play(
                 electrons.animate.shift(RIGHT * 6.5),
                 holes.animate.shift(LEFT * 6.5),
-                run_time=2.2, # Leggermente più lento
+                run_time=3.2, # Leggermente più lento
                 rate_func=linear
             )
             
@@ -168,7 +169,7 @@ class PNJunctionForwardBiasWithDopants(Scene):
             self.play(
                 FadeOut(electrons, scale=0.8),
                 FadeOut(holes, scale=0.8),
-                run_time=0.3
+                run_time=0.5
             )
 
         # Conclusione minimalista: solo la freccia della corrente

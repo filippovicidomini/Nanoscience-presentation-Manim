@@ -190,7 +190,15 @@ The result is the formation of a depletion region, a zone depleted of free carri
 
 
 
+= Forward Bias
+Now we apply forward bias: the p-side is connected to the positive terminal and the n-side to the negative terminal. This external voltage partially cancels the built-in potential.
+Visually, the depletion region shrinks because the barrier is reduced. With a lower barrier, majority carriers can cross the junction more easily: electrons are injected from the n-side into the p-side, and holes are injected from the p-side into the n-side.
+Once injected, these carriers move across the junction and recombine, and the result is a large current. This is why a diode conducts strongly in forward bias: the junction is no longer “blocking” carriers, it’s allowing injection and recombination.
 
+= Reverse Bias
+Now we apply reverse bias: the p-side is connected to the negative terminal and the n-side to the positive terminal. This external voltage adds to the built-in potential.
+Visually, the depletion region widens because the barrier is increased. With a higher barrier, majority carriers find it much harder to cross the junction: electrons on the n-side are pulled away from the junction, and holes on the p-side are also pulled away.
+As a result, very few carriers can cross the junction, leading to a very small current. This is why a diode blocks current in reverse bias: the junction acts as a strong barrier preventing carrier flow.
 
 
 
