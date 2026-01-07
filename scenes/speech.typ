@@ -39,10 +39,7 @@ that holds the solid together.
 
 “Let’s begin with a single silicon atom.
 At the center we have the positively charged nucleus,
-and around it four valence electrons.
-These are the electrons responsible for chemical bonding:
-they are the ones that will be shared with neighboring atoms
-to form the solid.”
+and around it four valence electrons.”
 
 [8–16 s] – Building the lattice
 
@@ -56,8 +53,7 @@ but this 2D view lets us clearly see how bonds form.”
 
 “When two silicon atoms are close,
 each provides one valence electron to the shared bond.
-Each bond is made of a pair of electrons that stay close
-to the region between the two nuclei.
+Each bond is made of a pair of electrons,
 As the lattice forms, every atom shares four electron pairs
 with its neighbors.
 The individual valence electrons that originally orbited each atom

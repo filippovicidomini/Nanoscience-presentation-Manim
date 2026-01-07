@@ -54,7 +54,7 @@ class SiliconLatticeSpin(Scene):
                 run_time=2.5
             )
         )
-        self.wait(5.5)
+        self.wait(2.5)
 
         # -----------------------------
         # 3) FORMAZIONE DEI LEGAMI
@@ -129,7 +129,7 @@ class SiliconLatticeSpin(Scene):
 
                 self.play(
                     FadeIn(pair, scale=0.4),
-                    run_time=0.2
+                    run_time=0.4
                 )
 
                 
