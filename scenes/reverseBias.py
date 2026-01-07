@@ -71,7 +71,7 @@ class PNJunctionReverseBiasWithDopants(Scene):
         ).move_to(ORIGIN)
 
         self.play(FadeIn(depletion), run_time=1.5)
-        self.wait(0.4)
+        self.wait(2)
 
         # -----------------------------
         # 3) APPLICAZIONE TENSIONE (REVERSE BIAS)
@@ -104,7 +104,8 @@ class PNJunctionReverseBiasWithDopants(Scene):
             FadeIn(battery),
             FadeIn(plus_label),
             FadeIn(minus_label),
-            run_time=2.0
+            run_time=4.0,
+            lag_ratio=0.8
         )
 
         # -----------------------------
@@ -117,7 +118,7 @@ class PNJunctionReverseBiasWithDopants(Scene):
             run_time=2.6,
             rate_func=rate_functions.ease_in_out_cubic
         )
-        self.wait(0.5)
+        self.wait(2)
 
         # -----------------------------
         # 5) CORRENTE QUASI NULLA (NO INIEZIONE)
@@ -126,7 +127,7 @@ class PNJunctionReverseBiasWithDopants(Scene):
         # self.wait(2.0)
 
         # Opzione B: mostra un *piccolissimo leakage* (1 elettrone e 1 lacuna che si muovono poco e svaniscono)
-        for _ in range(2):
+        for _ in range(5):
             y = random.choice([-1.2, 0.0, 1.2])
 
             # Minority-like drift molto piccolo (giusto per suggerire "leakage")
@@ -143,7 +144,7 @@ class PNJunctionReverseBiasWithDopants(Scene):
             self.play(
                 FadeOut(e, scale=0.9),
                 FadeOut(h, scale=0.9),
-                run_time=0.4
+                run_time=2
             )
 
         # Freccia corrente: piccola e tenue (reverse -> ~0)
@@ -151,7 +152,7 @@ class PNJunctionReverseBiasWithDopants(Scene):
             .next_to(battery, DOWN, buff=0.5)\
             .set_opacity(0.35)
         self.play(GrowArrow(tiny_current), run_time=1.2)
-        self.wait(2.5)
+        self.wait(3)
 
         for m in self.mobjects:
             m.clear_updaters()
