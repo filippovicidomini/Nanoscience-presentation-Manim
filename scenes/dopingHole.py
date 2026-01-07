@@ -2,10 +2,9 @@ from manim import *
 import numpy as np
 import random
 
-
-class PNJunctionFormation(Scene):
+class BoronLatticeWithHole(Scene):
     def construct(self):
-        self.camera.background_color = "#0b0f14"
+        self.camera.background_color = "#0b0f17"
 
         # -----------------------------
         # PARAMETRI
@@ -14,183 +13,116 @@ class PNJunctionFormation(Scene):
         cols = 9
         spacing = 2.0
 
-        # dopanti (pochi, sparsi) – indici coerenti con griglia rows x cols
-        dopants_n = [(1, 2), (3, 6), (2, 7), (0, 4)]  # fosforo (donatori)
-        dopants_p = [(1, 1), (3, 3), (2, 5), (4, 2)]  # boro (accettori)
+        # -----------------------------
+        # 1) RETICOLO: nuclei+orbite (già presenti)
+        #    + elettroni di legame (già presenti e vibranti)
+        # -----------------------------
+        atom_grid, bonds, bond_group = self.build_lattice_with_bonds(rows, cols, spacing)
+
+        self.add(VGroup(*[atom_grid[i][j].core for i in range(rows) for j in range(cols)]))
+        self.add(bond_group)
+        self.wait(1/60)  # stabilizza updater al primo frame
 
         # -----------------------------
-        # 1) COSTRUISCI DUE RETICOLI (stesso stile delle altre scene)
+        # 2) DOPING: sostituisci un atomo con BORO
         # -----------------------------
-        atom_grid_n, bonds_n, bond_group_n, lattice_n = self.build_lattice_with_bonds(
-            rows, cols, spacing, origin=LEFT * 8.0
-        )
-        atom_grid_p, bonds_p, bond_group_p, lattice_p = self.build_lattice_with_bonds(
-            rows, cols, spacing, origin=RIGHT * 8.0
-        )
+        dop_i, dop_j = 2, 4
+        dop_atom = atom_grid[dop_i][dop_j]
 
-        # Mostra: core + bond electrons
-        # (nelle altre scene aggiungi atoms e poi bond_group; qui facciamo uguale)
-        self.add(lattice_n)
-        self.add(lattice_p)
-        self.wait(1 / 60)
+        self.play(Indicate(dop_atom.core, scale_factor=1.05), run_time=0.7)
 
-        label_n = Text("n-type", font_size=34, color=BLUE_B).next_to(lattice_n, UP, buff=0.35)
-        label_p = Text("p-type", font_size=34, color=RED_B).next_to(lattice_p, UP, buff=0.35)
-        self.play(FadeIn(label_n), FadeIn(label_p), run_time=0.6)
+        b_nucleus = Circle(radius=0.22, color=PURPLE_C, fill_opacity=1.0).set_stroke(width=0)
+        b_nucleus.move_to(dop_atom.nucleus.get_center())
 
-        # -----------------------------
-        # 2) DOPING VISIVO (P e B) – stesso stile trasform nuclei + label
-        # -----------------------------
-        dopant_labels = VGroup()
+        b_label = Text("B", font_size=30, color=PURPLE_C).move_to(dop_atom.get_center())
 
-        for (i, j) in dopants_n:
-            atom = atom_grid_n[i][j]
-            p_nucleus = Circle(radius=0.28, color=ORANGE, fill_opacity=1.0).set_stroke(width=0)
-            p_nucleus.move_to(atom.nucleus.get_center())
-            p_label = Text("P", font_size=30, color=ORANGE).move_to(atom.get_center())
-            dopant_labels.add(p_label)
-            self.play(Transform(atom.nucleus, p_nucleus), FadeIn(p_label, shift=UP * 0.08), run_time=0.25)
-
-        for (i, j) in dopants_p:
-            atom = atom_grid_p[i][j]
-            b_nucleus = Circle(radius=0.22, color=PURPLE_C, fill_opacity=1.0).set_stroke(width=0)
-            b_nucleus.move_to(atom.nucleus.get_center())
-            b_label = Text("B", font_size=30, color=PURPLE_C).move_to(atom.get_center())
-            dopant_labels.add(b_label)
-            self.play(Transform(atom.nucleus, b_nucleus), FadeIn(b_label, shift=UP * 0.08), run_time=0.25)
-
-        self.wait(0.2)
-
-        # -----------------------------
-        # 3) AVVICINAMENTO (formazione giunzione)
-        # -----------------------------
         self.play(
-            lattice_n.animate.shift(RIGHT * 5.6),
-            label_n.animate.shift(RIGHT * 5.6),
-            lattice_p.animate.shift(LEFT * 5.6),
-            label_p.animate.shift(LEFT * 5.6),
-            dopant_labels.animate.shift(LEFT * 0),  # labels sono già “dentro” atomi, ma restano in scena
-            run_time=1.6,
-            rate_func=smooth,
+            Transform(dop_atom.nucleus, b_nucleus),
+            FadeIn(b_label, shift=UP * 0.1),
+            run_time=4
         )
+        self.wait(2)
 
         # -----------------------------
-        # 4) DEPLETION REGION (highlight) – coerente con palette
+        # 3) CREA UNA LACUNA: togli 1 elettrone da un legame vicino al dopante
         # -----------------------------
-        depletion = RoundedRectangle(
-            corner_radius=0.25,
-            width=2.4,
-            height=(rows - 1) * spacing + 2.0,
-            stroke_width=2,
-            stroke_color=YELLOW_B,
-            fill_color=YELLOW,
-            fill_opacity=0.08,
-        ).move_to(ORIGIN)
-        self.play(FadeIn(depletion), run_time=0.5)
+        # scegli un bond che tocca il dopante
+        near = self.bonds_touching_atom(bonds, (dop_i, dop_j))
+        hole_bond = random.choice(near)
 
-        # -----------------------------
-        # 5) DIFFUSIONE PORTATORI + RICOMBINAZIONE
-        #    (solo vicino all’interfaccia)
-        # -----------------------------
-        carriers = VGroup()
-        electrons = []
-        holes = []
+        # togli uno dei due elettroni (per esempio e2)
+        self.make_hole_in_bond(hole_bond, missing="e2")
 
-        for k in range(4):
-            y = (k - 1.5) * 0.65
-            e = self.make_free_electron(LEFT * 1.2 + UP * y)
-            h = self.make_hole(RIGHT * 1.2 + UP * y)
-            carriers.add(e, h)
-            electrons.append(e)
-            holes.append(h)
+        # marker visivo della lacuna
+        hole_marker = Circle(radius=0.10, color=YELLOW_C).set_stroke(width=4).move_to(hole_bond["mid"])
+        hole_label = Text("h⁺", font_size=28, color=YELLOW_C).next_to(hole_marker, UP, buff=0.12)
 
-        self.play(FadeIn(carriers), run_time=0.35)
+        hole_label.add_updater(lambda m: m.next_to(hole_marker, UP, buff=0.12))
+        self.add(hole_marker, hole_label)
 
-        # diffusione: e- n->p, h+ p->n
-        self.play(
-            *[e.animate.shift(RIGHT * 1.8) for e in electrons],
-            *[h.animate.shift(LEFT * 1.8) for h in holes],
-            run_time=1.0,
-            rate_func=rate_functions.ease_in_out_sine,
-        )
-
-        # ricombinazione: effetto anello + fade
-        for e, h in zip(electrons, holes):
-            self.recombine(e, h)
-
-        self.wait(0.2)
+        self.wait(2)
 
         # -----------------------------
-        # 6) IONI FISSI + CAMPO E
+        # 4) RANDOM WALK della lacuna sui legami
         # -----------------------------
-        fixed = VGroup()
-        for k in range(4):
-            y = (k - 1.5) * 0.65
-            dplus = MathTex("D^+", font_size=30, color=BLUE_B).move_to(LEFT * 0.65 + UP * y)
-            aminus = MathTex("A^-", font_size=30, color=RED_B).move_to(RIGHT * 0.65 + UP * y)
-            fixed.add(dplus, aminus)
-        self.play(FadeIn(fixed), run_time=0.6)
+        steps = 40
+        current = hole_bond
+        prev = None
 
-        arrows = VGroup()
-        for k in range(3):
-            y = (k - 1) * 0.8
-            a = Arrow(RIGHT * 0.85 + UP * y, LEFT * 0.85 + UP * y, buff=0.0, stroke_width=4)
-            arrows.add(a)
-        self.play(*[Create(a) for a in arrows], run_time=0.6)
+        for _ in range(steps):
+            # scegli un bond adiacente (condivide un atomo) per far “migrare” la lacuna
+            neighbors = self.neighbor_bonds(bonds, current)
+            if prev is not None and len(neighbors) > 1:
+                neighbors = [b for b in neighbors if b is not prev] or neighbors
+            nxt = random.choice(neighbors)
 
-        eq = MathTex("J_{diff}+J_{drift}=0", font_size=44, color=WHITE).to_edge(DOWN)
-        self.play(FadeIn(eq), run_time=0.6)
-        self.wait(1.2)
+            # “salto” elettronico: un elettrone dal bond nxt riempie il buco in current
+            self.hop_hole(current, nxt, hole_marker)
 
-        # pulizia updater (stesso approccio robusto)
-        for mob in lattice_n.family_members_with_points():
-            mob.clear_updaters()
-        for mob in lattice_p.family_members_with_points():
-            mob.clear_updaters()
+            prev, current = current, nxt
+
+        self.wait(2.0)
 
     # =========================================================
-    # COSTRUZIONE RETICOLO + LEGAMI (coppie vibranti) – COPIATO DAL TUO STILE
+    # COSTRUZIONE RETICOLO + LEGAMI (coppie vibranti)
     # =========================================================
-    def build_lattice_with_bonds(self, rows, cols, spacing, origin=ORIGIN):
+    def build_lattice_with_bonds(self, rows, cols, spacing):
         atom_grid = [[None for _ in range(cols)] for _ in range(rows)]
+        bonds = []
         bond_group = VGroup()
-        atoms = VGroup()
-        bonds = []  # lista di dict come in dopingHole
 
-        # atomi (core + elettroni di valenza “spenti”)
+        # atomi (core + elettroni di valenza "spenti")
         for i in range(rows):
             for j in range(cols):
-                x = (j - (cols - 1) / 2) * spacing
-                y = (i - (rows - 1) / 2) * spacing
-                pos = np.array([x, y, 0.0]) + origin
+                x = (j - (cols - 1)/2) * spacing
+                y = (i - (rows - 1)/2) * spacing
+                pos = np.array([x, y, 0.0])
 
                 atom = self.make_valence_atom()
                 atom.move_to(pos)
-                atom.electrons.set_opacity(0)
+                atom.electrons.set_opacity(0)  # non li usiamo in questa scena
 
                 atom_grid[i][j] = atom
-                atoms.add(atom)
 
-        # bond orizzontali
+        # crea bond orizzontali
         for i in range(rows):
             for j in range(cols - 1):
                 p1 = atom_grid[i][j].get_center()
-                p2 = atom_grid[i][j + 1].get_center()
-                b = self.make_bond(p1, p2, (i, j), (i, j + 1))
+                p2 = atom_grid[i][j+1].get_center()
+                b = self.make_bond(p1, p2, (i, j), (i, j+1))
                 bonds.append(b)
                 bond_group.add(b["pair"])
 
-        # bond verticali
+        # crea bond verticali
         for i in range(rows - 1):
             for j in range(cols):
                 p1 = atom_grid[i][j].get_center()
-                p2 = atom_grid[i + 1][j].get_center()
-                b = self.make_bond(p1, p2, (i, j), (i + 1, j))
+                p2 = atom_grid[i+1][j].get_center()
+                b = self.make_bond(p1, p2, (i, j), (i+1, j))
                 bonds.append(b)
                 bond_group.add(b["pair"])
 
-        lattice = VGroup(atoms, bond_group)
-        return atom_grid, bonds, bond_group, lattice
+        return atom_grid, bonds, bond_group
 
     def make_bond(self, p1, p2, a_idx, b_idx, sep=0.18):
         mid = 0.5 * (p1 + p2)
@@ -206,23 +138,110 @@ class PNJunctionFormation(Scene):
         e1 = Dot(mid + off1, radius=0.07, color="#6EA8FE")
         e2 = Dot(mid + off2, radius=0.07, color="#6EA8FE")
 
+        # vibrazioni (come il tuo stile)
         self.attach_bond_osc(e1, mid, off1, phase_shift=0.0)
         self.attach_bond_osc(e2, mid, off2, phase_shift=PI)
 
         pair = VGroup(e1, e2)
+
         return {
-            "a": a_idx,
-            "b": b_idx,
+            "a": a_idx, "b": b_idx,
             "mid": mid,
-            "off1": off1,
-            "off2": off2,
-            "e1": e1,
-            "e2": e2,
+            "off1": off1, "off2": off2,
+            "e1": e1, "e2": e2,
             "pair": pair,
+            "missing": None  # "e1" o "e2"
         }
 
     # =========================================================
-    # ATOMO BASE (uguale alle altre scene)
+    # LACUNA: rimuovi 1 elettrone da un bond
+    # =========================================================
+    def make_hole_in_bond(self, bond, missing="e2"):
+        bond["missing"] = missing
+        dot = bond[missing]
+        dot.clear_updaters()
+        dot.set_fill(opacity=0)
+        dot.set_stroke(opacity=0)
+
+    # =========================================================
+    # ADIACENZE TRA LEGAMI
+    # =========================================================
+    def bonds_touching_atom(self, bonds, atom_idx):
+        out = []
+        for b in bonds:
+            if b["a"] == atom_idx or b["b"] == atom_idx:
+                out.append(b)
+        return out
+
+    def neighbor_bonds(self, bonds, bond):
+        # due bond sono vicini se condividono almeno un atomo
+        a1, b1 = bond["a"], bond["b"]
+        out = []
+        for bb in bonds:
+            if bb is bond:
+                continue
+            if bb["a"] in (a1, b1) or bb["b"] in (a1, b1):
+                out.append(bb)
+        return out
+
+    # =========================================================
+    # HOP: un elettrone da nxt riempie la lacuna in current
+    #      e la lacuna si sposta su nxt
+    # =========================================================
+    def hop_hole(self, current, nxt, hole_marker):
+        # current DEVE avere una lacuna
+        if current["missing"] is None:
+            return
+
+        # scegli quale elettrone "donare" da nxt: preferisci uno visibile
+        donor_name = "e1" if nxt["e1"].get_fill_opacity() > 0.5 else "e2"
+        donor = nxt[donor_name]
+
+        # posizione da riempire nel bond current
+        missing_name = current["missing"]
+        target_pos = current["mid"] + (current["off1"] if missing_name == "e1" else current["off2"])
+
+        # crea una copia temporanea che si muove (più controllabile)
+        temp = donor.copy()
+        temp.clear_updaters()
+        temp.set_fill(opacity=1.0)
+        temp.set_stroke(opacity=1.0)
+        self.add(temp)
+
+        # "svuota" il donor nel bond nxt -> nuova lacuna lì
+        donor.clear_updaters()
+        donor.set_fill(opacity=0)
+        donor.set_stroke(opacity=0)
+        nxt["missing"] = donor_name
+
+        # animazione: temp va a riempire la lacuna
+        self.play(
+            temp.animate.move_to(target_pos),
+            run_time=0.25,
+            rate_func=smooth
+        )
+
+        # ripristina nel bond current: riaccendi il dot mancante (quello originale)
+        fill_dot = current[missing_name]
+        fill_dot.move_to(target_pos)
+        fill_dot.set_fill(opacity=1.0)
+        fill_dot.set_stroke(opacity=1.0)
+        self.attach_bond_osc(
+            fill_dot,
+            current["mid"],
+            current["off1"] if missing_name == "e1" else current["off2"],
+            phase_shift=0.0 if missing_name == "e1" else PI
+        )
+        current["missing"] = None
+
+        # rimuovi la particella temp (era solo “trasferimento visivo”)
+        self.remove(temp)
+
+        # sposta marker della lacuna sul bond nxt
+        self.play(hole_marker.animate.move_to(nxt["mid"]), run_time=0.2, rate_func=smooth)
+
+    # =========================================================
+    # ATOMO BASE (uguale al tuo)
     # =========================================================
     def make_valence_atom(self, orbit_radius=0.8) -> VGroup:
         nucleus = Circle(radius=0.22, color="#66E0A3", fill_opacity=1.0).set_stroke(width=0)
@@ -246,18 +265,11 @@ class PNJunctionFormation(Scene):
         return atom
 
     # =========================================================
-    # OSCILLAZIONE ELETTRONI DI LEGAME (stesso stile dopingHole)
+    # OSCILLAZIONE ELETTRONE DI LEGAME (tua logica, ripulita)
     # =========================================================
-    def attach_bond_osc(
-        self,
-        dot,
-        base_center,
-        base_offset,
-        amplitude=0.03,
-        omega=3.0,
-        phase_shift=0.0,
-        noise_amp=0.004,
-    ):
+    def attach_bond_osc(self, dot, base_center, base_offset,
+                        amplitude=0.03, omega=3.0, phase_shift=0.0, noise_amp=0.004):
+        # evita doppio updater
         dot.clear_updaters()
 
         base_center = np.array(base_center)
@@ -265,7 +277,7 @@ class PNJunctionFormation(Scene):
         perp = base_offset.copy()
         if np.linalg.norm(perp[:2]) == 0:
             perp = np.array([1.0, 0.0, 0.0])
-        perp = perp / (np.linalg.norm(perp[:2]) or 1.0)
+        perp = perp / np.linalg.norm(perp[:2])
 
         t = [0.0]
 
@@ -277,33 +289,4 @@ class PNJunctionFormation(Scene):
             mobj.move_to(base_center + base_offset + osc * perp + jitter)
 
         dot.add_updater(updater)
-
-    # =========================================================
-    # PORTATORI MOBILI + RICOMBINAZIONE (robusta)
-    # =========================================================
-    def make_free_electron(self, pos):
-        # stile simile a dopingElectron: dot + piccolo glow
-        e = Dot(radius=0.075, color=RED).move_to(pos)
-        glow = Circle(radius=0.16).set_stroke(BLUE_C, width=2, opacity=0.55)
-        glow.move_to(e.get_center())
-        glow.add_updater(lambda m, dt: m.move_to(e.get_center()))
-        return VGroup(e, glow)
-
-    def make_hole(self, pos):
-        h = Circle(radius=0.10, color=YELLOW_C).set_stroke(width=4).move_to(pos)
-        return h
-
-    def recombine(self, e_group, h_mob):
-        # e_group è VGroup(e_dot, glow)
-        e_dot = e_group[0]
-        center = e_dot.get_center()
-        ring = Circle(radius=0.10, stroke_width=4, color=YELLOW).move_to(center)
-        self.play(
-            AnimationGroup(
-                ring.animate.scale(3.0).set_stroke(opacity=0.0),
-                FadeOut(e_group),
-                FadeOut(h_mob),
-                lag_ratio=0.0,
-            ),
-            run_time=0.45,
-        )
+        
