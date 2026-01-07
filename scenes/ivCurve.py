@@ -13,7 +13,7 @@ class DiodeIVCurve(ZoomedScene):
             zoomed_display_height=2.9,
             zoomed_display_width=4.6,
             image_frame_stroke_width=3,
-            zoomed_camera_config={"default_frame_stroke_width": 2},
+            zoomed_camera_config={"default_frame_stroke_width": 3},
             **kwargs,
         )
 
@@ -67,7 +67,7 @@ class DiodeIVCurve(ZoomedScene):
         title = boxed_label("Diode I–V characteristic", COL_AXIS, font_size=28, opacity=0.75)
         title.next_to(axes, UP, buff=0.18)
 
-        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), FadeIn(title), run_time=1.6)
+        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), FadeIn(title), run_time=5)
 
         # -----------------------------
         # Diode-like I–V model (simple, visually clear)
@@ -115,7 +115,7 @@ class DiodeIVCurve(ZoomedScene):
         )
 
         # Animate curve drawing
-        self.play(Create(curve), run_time=2.2, rate_func=rate_functions.ease_in_out_cubic)
+        self.play(Create(curve), run_time=5, rate_func=rate_functions.ease_in_out_cubic)
 
         # -----------------------------
         # Highlight regions: Reverse & Forward
@@ -148,7 +148,7 @@ class DiodeIVCurve(ZoomedScene):
 
         self.play(FadeIn(rev_rect), FadeIn(fwd_rect), run_time=0.8)
         self.play(FadeIn(rev_tag), FadeIn(fwd_tag), run_time=0.8)
-        self.wait(1.0)
+        self.wait(5)
 
         # -----------------------------
         # Clean zoom (magnifier) around 0 V using ZoomedScene
@@ -182,14 +182,14 @@ class DiodeIVCurve(ZoomedScene):
         origin_marker = Dot(axes.get_origin(), radius=0.045, color=COL_AXIS)
 
         self.add(origin_marker)
-        self.play(FadeIn(zoom_frame), run_time=0.5)
+        self.play(FadeIn(zoom_frame), run_time=2)
 
         # Activate zooming and pop out the display
         self.activate_zooming()
         self.play(
             FadeIn(self.zoomed_display),
             FadeIn(zoom_title),
-            run_time=0.8,
+            run_time=2,
         )
 
         # Optional: subtle connector line (very light)
@@ -200,7 +200,7 @@ class DiodeIVCurve(ZoomedScene):
             stroke_width=2,
             color=COL_AXIS,
         ).set_opacity(0.18)
-        self.play(Create(connector), run_time=0.5)
+        self.play(Create(connector), run_time=1.5)
 
         self.wait(1.1)
 
@@ -231,7 +231,7 @@ class DiodeIVCurve(ZoomedScene):
 
         self.play(FadeIn(knee_dot), Create(knee_line), run_time=0.7)
         self.play(FadeIn(knee_lbl), GrowArrow(knee_arrow), run_time=0.8)
-        self.wait(0.6)
+        self.wait(4)
 
         # -----------------------------
         # Reverse breakdown (conceptual marker)
@@ -249,7 +249,7 @@ class DiodeIVCurve(ZoomedScene):
         br_lbl.next_to(axes.c2p(V_br, 2.7), UP, buff=0.12)
 
         self.play(Create(br_line), FadeIn(br_lbl), run_time=1.0)
-        self.wait(1.0)
+        self.wait(4)
 
         # -----------------------------
         # Animated sweep ("measuring" the I–V curve) — placed AFTER annotations
@@ -286,7 +286,7 @@ class DiodeIVCurve(ZoomedScene):
         self.play(FadeOut(sweep_tag), run_time=0.3)
 
         # Keep the dot/trail briefly, then remove for a clean final key message
-        self.wait(0.6)
+        self.wait(4)
         self.remove(trail, sweep_dot)
 
         # -----------------------------

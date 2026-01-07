@@ -223,7 +223,15 @@ So when the bandgap is small, the photon has lower energy and longer wavelength 
 The last part of the animation makes this explicit by increasing the $E_c–E_v$ separation and showing the corresponding color change in the emitted light.
 
 
+= I-V Characteristic of the PN Junction
+This scene shows the macroscopic signature of everything we saw at the junction: diffusion, drift, the depletion region, and the potential barrier.
 
+In reverse bias (negative voltage), the depletion region widens and the barrier increases. Majority carriers are pulled away from the junction, so almost no current flows — only a tiny leakage current. At sufficiently large reverse voltage, the diode can enter reverse breakdown, where the reverse current increases rapidly (shown here as a conceptual marker).
+
+In forward bias (positive voltage), the external voltage lowers the barrier and narrows the depletion region. Once the applied voltage approaches the knee voltage (around $0.7 V$ for silicon), carrier injection becomes efficient and the current rises exponentially.
+The zoom around $0 V$ highlights that the current does not “jump” abruptly: it increases smoothly, but the exponential growth makes it look like a sharp turn on a large scale.
+
+This is why the I–V characteristic is a compact, measurable summary of the junction’s internal potential barrier.
 
 
 
