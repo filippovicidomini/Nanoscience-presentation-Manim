@@ -46,15 +46,15 @@ class PNJunctionFormation(Scene):
             atom = atom_grid_n[i][j]
             p_nucleus = Circle(radius=0.28, color=ORANGE, fill_opacity=1.0).set_stroke(width=0)
             p_nucleus.move_to(atom.nucleus.get_center())
-            self.play(Transform(atom.nucleus, p_nucleus), run_time=0.25)
+            self.play(Transform(atom.nucleus, p_nucleus), run_time=1)
 
         for (i, j) in dopants_p:
             atom = atom_grid_p[i][j]
             b_nucleus = Circle(radius=0.22, color=PURPLE_C, fill_opacity=1.0).set_stroke(width=0)
             b_nucleus.move_to(atom.nucleus.get_center())
-            self.play(Transform(atom.nucleus, b_nucleus), run_time=0.25)
+            self.play(Transform(atom.nucleus, b_nucleus), run_time=1)
 
-        self.wait(0.2)
+        self.wait(3)
 
         # -----------------------------
         # 3) AVVICINAMENTO (formazione giunzione)
@@ -64,7 +64,7 @@ class PNJunctionFormation(Scene):
             label_n.animate.shift(RIGHT * 2.4),
             lattice_p.animate.shift(LEFT * 2.4),
             label_p.animate.shift(LEFT * 2.4),
-            run_time=1.6,
+            run_time=4,
             rate_func=smooth,
         )
 
@@ -84,7 +84,7 @@ class PNJunctionFormation(Scene):
 
         # aggiungi i nuovi elettroni di legame sopra tutto, e falli comparire
         self.add(interface_pairs)
-        self.play(FadeIn(interface_pairs, shift=UP * 0.05), run_time=0.5)
+        self.play(FadeIn(interface_pairs, shift=UP * 0.05), run_time=2)
 
         # -----------------------------
         # 4) DEPLETION REGION (highlight) – coerente con palette
@@ -98,7 +98,7 @@ class PNJunctionFormation(Scene):
             fill_color=YELLOW,
             fill_opacity=0.08,
         ).move_to(0.5 * (atom_grid_n[rows // 2][cols - 1].get_center() + atom_grid_p[rows // 2][0].get_center()))
-        self.play(FadeIn(depletion), run_time=0.5)
+        self.play(FadeIn(depletion), run_time=2)
 
         # -----------------------------
         # 5) DIFFUSIONE PORTATORI + RICOMBINAZIONE
@@ -122,7 +122,7 @@ class PNJunctionFormation(Scene):
         self.play(
             *[e.animate.shift(RIGHT * 1.8) for e in electrons],
             *[h.animate.shift(LEFT * 1.8) for h in holes],
-            run_time=1.0,
+            run_time=4.0,
             rate_func=rate_functions.ease_in_out_sine,
         )
 
@@ -130,7 +130,7 @@ class PNJunctionFormation(Scene):
         for e, h in zip(electrons, holes):
             self.recombine(e, h)
 
-        self.wait(0.2)
+        self.wait(4)
 
         # -----------------------------
         # 6) IONI FISSI + CAMPO E
@@ -146,13 +146,13 @@ class PNJunctionFormation(Scene):
         arrows = VGroup()
         for k in range(3):
             y = (k - 1) * 0.8
-            a = Arrow(RIGHT * 0.85 + UP * y, LEFT * 0.85 + UP * y, buff=0.0, stroke_width=4)
+            a = Arrow(LEFT * 0.85 + UP * y, RIGHT * 0.85 + UP * y, buff=0.0, stroke_width=4)
             arrows.add(a)
         self.play(*[Create(a) for a in arrows], run_time=0.6)
 
         eq = MathTex("J_{diff}+J_{drift}=0", font_size=44, color=WHITE).to_edge(DOWN)
         self.play(FadeIn(eq), run_time=0.6)
-        self.wait(1.2)
+        self.wait(10)
 
         # pulizia updater (stesso approccio robusto)
         for mob in lattice_n.family_members_with_points():

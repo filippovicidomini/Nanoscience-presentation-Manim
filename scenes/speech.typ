@@ -180,6 +180,42 @@ this corresponds to empty states near the top of the valence band,
 where electrons can easily move into.”
 
 
+= Formation of the PN Junction
+We start with two separate silicon lattices: an n-type region on the left and a p-type region on the right.
+As the two regions are brought closer together, their crystal lattices connect seamlessly at the interface. New covalent bonds form between atoms at the boundary, creating a continuous silicon structure.
+Once the junction is formed, carriers begin to diffuse due to concentration gradients. Electrons diffuse from the n-type region into the p-type region, while holes diffuse in the opposite direction, from p-type to n-type.
+Near the interface, electrons and holes recombine. This recombination removes mobile charge carriers from the junction region, leaving behind fixed ionized donors on the n-side and fixed ionized acceptors on the p-side.
+The result is the formation of a depletion region, a zone depleted of free carriers. The exposed fixed charges generate an internal electric field pointing from the n-type side to the p-type side.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #pagebreak()
 #set bibliography(full: true, title: "References")
 #bibliography("../Nanomaterials-Presentation.bib")
