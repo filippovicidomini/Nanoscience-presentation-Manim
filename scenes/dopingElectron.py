@@ -2,227 +2,113 @@ from manim import *
 import numpy as np
 import random
 
-
-class PNJunctionFormation(Scene):
+class SiliconLatticeWithFreeElectron(Scene):
     def construct(self):
-        self.camera.background_color = "#0b0f14"
+        self.camera.background_color = "#0b0f17"
 
         # -----------------------------
-        # PARAMETRI
+        # PARAMETRI RETICOLO
         # -----------------------------
         rows = 5
         cols = 9
         spacing = 2.0
 
-        # dopanti (pochi, sparsi) – indici coerenti con griglia rows x cols
-        dopants_n = [(1, 2), (3, 6), (2, 7), (0, 4)]  # fosforo (donatori)
-        dopants_p = [(1, 1), (3, 3), (2, 5), (4, 2)]  # boro (accettori)
-
         # -----------------------------
-        # 1) COSTRUISCI DUE RETICOLI (stesso stile delle altre scene)
+        # 1) COSTRUZIONE RETICOLO (CORE ONLY)
         # -----------------------------
-        atom_grid_n, bonds_n, bond_group_n, lattice_n = self.build_lattice_with_bonds(
-            rows, cols, spacing, origin=LEFT * 8.0
-        )
-        atom_grid_p, bonds_p, bond_group_p, lattice_p = self.build_lattice_with_bonds(
-            rows, cols, spacing, origin=RIGHT * 8.0
-        )
-
-        # Mostra: core + bond electrons
-        # (nelle altre scene aggiungi atoms e poi bond_group; qui facciamo uguale)
-        self.add(lattice_n)
-        self.add(lattice_p)
-        self.wait(1 / 60)
-
-        label_n = Text("n-type", font_size=34, color=BLUE_B).next_to(lattice_n, UP, buff=0.35)
-        label_p = Text("p-type", font_size=34, color=RED_B).next_to(lattice_p, UP, buff=0.35)
-        self.play(FadeIn(label_n), FadeIn(label_p), run_time=0.6)
-
-        # -----------------------------
-        # 2) DOPING VISIVO (P e B) – stesso stile trasform nuclei + label
-        # -----------------------------
-        dopant_labels = VGroup()
-
-        for (i, j) in dopants_n:
-            atom = atom_grid_n[i][j]
-            p_nucleus = Circle(radius=0.28, color=ORANGE, fill_opacity=1.0).set_stroke(width=0)
-            p_nucleus.move_to(atom.nucleus.get_center())
-            p_label = Text("P", font_size=30, color=ORANGE).move_to(atom.get_center())
-            dopant_labels.add(p_label)
-            self.play(Transform(atom.nucleus, p_nucleus), FadeIn(p_label, shift=UP * 0.08), run_time=0.25)
-
-        for (i, j) in dopants_p:
-            atom = atom_grid_p[i][j]
-            b_nucleus = Circle(radius=0.22, color=PURPLE_C, fill_opacity=1.0).set_stroke(width=0)
-            b_nucleus.move_to(atom.nucleus.get_center())
-            b_label = Text("B", font_size=30, color=PURPLE_C).move_to(atom.get_center())
-            dopant_labels.add(b_label)
-            self.play(Transform(atom.nucleus, b_nucleus), FadeIn(b_label, shift=UP * 0.08), run_time=0.25)
-
-        self.wait(0.2)
-
-        # -----------------------------
-        # 3) AVVICINAMENTO (formazione giunzione)
-        # -----------------------------
-        self.play(
-            lattice_n.animate.shift(RIGHT * 5.6),
-            label_n.animate.shift(RIGHT * 5.6),
-            lattice_p.animate.shift(LEFT * 5.6),
-            label_p.animate.shift(LEFT * 5.6),
-            dopant_labels.animate.shift(LEFT * 0),  # labels sono già “dentro” atomi, ma restano in scena
-            run_time=1.6,
-            rate_func=smooth,
-        )
-
-        # -----------------------------
-        # 4) DEPLETION REGION (highlight) – coerente con palette
-        # -----------------------------
-        depletion = RoundedRectangle(
-            corner_radius=0.25,
-            width=2.4,
-            height=(rows - 1) * spacing + 2.0,
-            stroke_width=2,
-            stroke_color=YELLOW_B,
-            fill_color=YELLOW,
-            fill_opacity=0.08,
-        ).move_to(ORIGIN)
-        self.play(FadeIn(depletion), run_time=0.5)
-
-        # -----------------------------
-        # 5) DIFFUSIONE PORTATORI + RICOMBINAZIONE
-        #    (solo vicino all’interfaccia)
-        # -----------------------------
-        carriers = VGroup()
-        electrons = []
-        holes = []
-
-        for k in range(4):
-            y = (k - 1.5) * 0.65
-            e = self.make_free_electron(LEFT * 1.2 + UP * y)
-            h = self.make_hole(RIGHT * 1.2 + UP * y)
-            carriers.add(e, h)
-            electrons.append(e)
-            holes.append(h)
-
-        self.play(FadeIn(carriers), run_time=0.35)
-
-        # diffusione: e- n->p, h+ p->n
-        self.play(
-            *[e.animate.shift(RIGHT * 1.8) for e in electrons],
-            *[h.animate.shift(LEFT * 1.8) for h in holes],
-            run_time=1.0,
-            rate_func=rate_functions.ease_in_out_sine,
-        )
-
-        # ricombinazione: effetto anello + fade
-        for e, h in zip(electrons, holes):
-            self.recombine(e, h)
-
-        self.wait(0.2)
-
-        # -----------------------------
-        # 6) IONI FISSI + CAMPO E
-        # -----------------------------
-        fixed = VGroup()
-        for k in range(4):
-            y = (k - 1.5) * 0.65
-            dplus = MathTex("D^+", font_size=30, color=BLUE_B).move_to(LEFT * 0.65 + UP * y)
-            aminus = MathTex("A^-", font_size=30, color=RED_B).move_to(RIGHT * 0.65 + UP * y)
-            fixed.add(dplus, aminus)
-        self.play(FadeIn(fixed), run_time=0.6)
-
-        arrows = VGroup()
-        for k in range(3):
-            y = (k - 1) * 0.8
-            a = Arrow(RIGHT * 0.85 + UP * y, LEFT * 0.85 + UP * y, buff=0.0, stroke_width=4)
-            arrows.add(a)
-        self.play(*[Create(a) for a in arrows], run_time=0.6)
-
-        eq = MathTex("J_{diff}+J_{drift}=0", font_size=44, color=WHITE).to_edge(DOWN)
-        self.play(FadeIn(eq), run_time=0.6)
-        self.wait(1.2)
-
-        # pulizia updater (stesso approccio robusto)
-        for mob in lattice_n.family_members_with_points():
-            mob.clear_updaters()
-        for mob in lattice_p.family_members_with_points():
-            mob.clear_updaters()
-
-    # =========================================================
-    # COSTRUZIONE RETICOLO + LEGAMI (coppie vibranti) – COPIATO DAL TUO STILE
-    # =========================================================
-    def build_lattice_with_bonds(self, rows, cols, spacing, origin=ORIGIN):
         atom_grid = [[None for _ in range(cols)] for _ in range(rows)]
-        bond_group = VGroup()
         atoms = VGroup()
-        bonds = []  # lista di dict come in dopingHole
 
-        # atomi (core + elettroni di valenza “spenti”)
         for i in range(rows):
             for j in range(cols):
                 x = (j - (cols - 1) / 2) * spacing
                 y = (i - (rows - 1) / 2) * spacing
-                pos = np.array([x, y, 0.0]) + origin
+                pos = np.array([x, y, 0.0])
 
                 atom = self.make_valence_atom()
                 atom.move_to(pos)
+
+                # NON mostriamo gli elettroni di valenza
                 atom.electrons.set_opacity(0)
 
                 atom_grid[i][j] = atom
                 atoms.add(atom)
+                
+        self.add(atoms)
+        self.wait(3)
 
-        # bond orizzontali
+        # -----------------------------
+        # 2) LEGAMI COVALENTI (COPPIE e-)
+        # -----------------------------
+        bond_electrons = VGroup()
+
         for i in range(rows):
             for j in range(cols - 1):
-                p1 = atom_grid[i][j].get_center()
-                p2 = atom_grid[i][j + 1].get_center()
-                b = self.make_bond(p1, p2, (i, j), (i, j + 1))
-                bonds.append(b)
-                bond_group.add(b["pair"])
+                pair = self.make_bond_pair(
+                    atom_grid[i][j].get_center(),
+                    atom_grid[i][j + 1].get_center()
+                )
+                bond_electrons.add(pair)
 
-        # bond verticali
         for i in range(rows - 1):
             for j in range(cols):
-                p1 = atom_grid[i][j].get_center()
-                p2 = atom_grid[i + 1][j].get_center()
-                b = self.make_bond(p1, p2, (i, j), (i + 1, j))
-                bonds.append(b)
-                bond_group.add(b["pair"])
+                pair = self.make_bond_pair(
+                    atom_grid[i][j].get_center(),
+                    atom_grid[i + 1][j].get_center()
+                )
+                bond_electrons.add(pair)
+                
+        self.add(bond_electrons)
+        self.wait(2)
 
-        lattice = VGroup(atoms, bond_group)
-        return atom_grid, bonds, bond_group, lattice
+        # -----------------------------
+        # 3) DOPING: FOSFORO
+        # -----------------------------
+        dop_i, dop_j = 2, 4
+        dop_atom = atom_grid[dop_i][dop_j]
 
-    def make_bond(self, p1, p2, a_idx, b_idx, sep=0.18):
-        mid = 0.5 * (p1 + p2)
+        self.play(Indicate(dop_atom.core, scale_factor=1.05), run_time=0.7)
 
-        d = p2 - p1
-        d[2] = 0
-        d /= (np.linalg.norm(d[:2]) or 1.0)
-        perp = np.array([-d[1], d[0], 0.0])
+        p_nucleus = Circle(
+            radius=0.28,
+            color=ORANGE,
+            fill_opacity=1.0
+        ).set_stroke(width=0).move_to(dop_atom.nucleus.get_center())
 
-        off1 = sep * perp
-        off2 = -sep * perp
+        p_label = Text("P", font_size=30, color=ORANGE).move_to(dop_atom.get_center())
 
-        e1 = Dot(mid + off1, radius=0.07, color="#6EA8FE")
-        e2 = Dot(mid + off2, radius=0.07, color="#6EA8FE")
+        self.play(
+            Transform(dop_atom.nucleus, p_nucleus),
+            FadeIn(p_label, shift=UP * 0.1),
+            run_time=0.9
+        )
+        self.wait(2)
 
-        self.attach_bond_osc(e1, mid, off1, phase_shift=0.0)
-        self.attach_bond_osc(e2, mid, off2, phase_shift=PI)
+        # -----------------------------
+        # 4) ELETTRONE LIBERO (QUASI BALISTICO)
+        # -----------------------------
+        e_free = Dot(radius=0.075, color=RED)
+        e_free.move_to(dop_atom.get_center() + 0.6 * RIGHT + 0.25 * UP)
 
-        pair = VGroup(e1, e2)
-        return {
-            "a": a_idx,
-            "b": b_idx,
-            "mid": mid,
-            "off1": off1,
-            "off2": off2,
-            "e1": e1,
-            "e2": e2,
-            "pair": pair,
-        }
+        glow = Circle(radius=0.16).set_stroke(BLUE_C, width=2, opacity=0.55)
+        glow.move_to(e_free.get_center())
+
+        e_label = Text("e⁻", font_size=28, color=BLUE_C).next_to(e_free, UP, buff=0.12)
+        e_label.add_updater(lambda m: m.next_to(e_free, UP, buff=0.12))
+        glow.add_updater(lambda m, dt: m.move_to(e_free.get_center()))
+
+        self.play(
+            FadeIn(e_free, scale=0.6),
+            FadeIn(glow, scale=0.6),
+            FadeIn(e_label, shift=UP * 0.1),
+            run_time=2
+        )
+
+        self.add_free_electron_motion_potential(e_free, atom_grid)
+        self.wait(25)
 
     # =========================================================
-    # ATOMO BASE (uguale alle altre scene)
+    # ATOMO BASE
     # =========================================================
     def make_valence_atom(self, orbit_radius=0.8) -> VGroup:
         nucleus = Circle(radius=0.22, color="#66E0A3", fill_opacity=1.0).set_stroke(width=0)
@@ -232,6 +118,7 @@ class PNJunctionFormation(Scene):
         directions = {"up": UP, "right": RIGHT, "down": DOWN, "left": LEFT}
         electrons = VGroup()
         e_by_dir = {}
+
         for name, d in directions.items():
             e = Dot(point=orbit_radius * d, radius=0.07, color="#6EA8FE")
             electrons.add(e)
@@ -246,9 +133,29 @@ class PNJunctionFormation(Scene):
         return atom
 
     # =========================================================
-    # OSCILLAZIONE ELETTRONI DI LEGAME (stesso stile dopingHole)
+    # COPPIA DI LEGAME (CON VIBRAZIONE)
     # =========================================================
-    def attach_bond_osc(
+    def make_bond_pair(self, p1, p2, sep=0.18):
+        mid = 0.5 * (p1 + p2)
+
+        d = p2 - p1
+        d[2] = 0
+        d /= np.linalg.norm(d[:2]) or 1
+
+        perp = np.array([-d[1], d[0], 0.0])
+
+        e1 = Dot(mid + sep * perp, radius=0.07, color="#6EA8FE")
+        e2 = Dot(mid - sep * perp, radius=0.07, color="#6EA8FE")
+
+        self.add_oscillation_to_bond_electron(e1, mid, sep * perp, phase_shift=0)
+        self.add_oscillation_to_bond_electron(e2, mid, -sep * perp, phase_shift=PI)
+
+        return VGroup(e1, e2)
+
+    # =========================================================
+    # VIBRAZIONE ELETTRONI DI LEGAME
+    # =========================================================
+    def add_oscillation_to_bond_electron(
         self,
         dot,
         base_center,
@@ -258,52 +165,71 @@ class PNJunctionFormation(Scene):
         phase_shift=0.0,
         noise_amp=0.004,
     ):
-        dot.clear_updaters()
-
-        base_center = np.array(base_center)
-        base_offset = np.array(base_offset)
-        perp = base_offset.copy()
-        if np.linalg.norm(perp[:2]) == 0:
-            perp = np.array([1.0, 0.0, 0.0])
-        perp = perp / (np.linalg.norm(perp[:2]) or 1.0)
-
         t = [0.0]
+        perp = base_offset / (np.linalg.norm(base_offset[:2]) or 1)
 
-        def updater(mobj, dt):
+        def updater(m, dt):
             t[0] += dt
             osc = amplitude * np.sin(omega * t[0] + phase_shift)
             jitter = noise_amp * np.random.normal(size=3)
-            jitter[2] = 0.0
-            mobj.move_to(base_center + base_offset + osc * perp + jitter)
+            jitter[2] = 0
+            m.move_to(base_center + base_offset + osc * perp + jitter)
 
         dot.add_updater(updater)
 
     # =========================================================
-    # PORTATORI MOBILI + RICOMBINAZIONE (robusta)
+    # ELETTRONE LIBERO — PRESET A
     # =========================================================
-    def make_free_electron(self, pos):
-        # stile simile a dopingElectron: dot + piccolo glow
-        e = Dot(radius=0.075, color=RED).move_to(pos)
-        glow = Circle(radius=0.16).set_stroke(BLUE_C, width=2, opacity=0.55)
-        glow.move_to(e.get_center())
-        glow.add_updater(lambda m, dt: m.move_to(e.get_center()))
-        return VGroup(e, glow)
+    def add_free_electron_motion_potential(
+        self,
+        e_dot,
+        atom_grid,
+        D=0.98,
+        gamma=0.15,
+        g_vec=np.array([0.0, 0.0, 0.0]),
+        k_rep=3.2,
+        a=0.30,
+        p=6.0,
+        max_speed=5.5,
+        bound_margin=0.95,
+    ):
+        nuclei = np.array([atom_grid[i][j].get_center()
+                           for i in range(len(atom_grid))
+                           for j in range(len(atom_grid[0]))])
 
-    def make_hole(self, pos):
-        h = Circle(radius=0.10, color=YELLOW_C).set_stroke(width=4).move_to(pos)
-        return h
+        min_x = nuclei[:, 0].min() + bound_margin
+        max_x = nuclei[:, 0].max() - bound_margin
+        min_y = nuclei[:, 1].min() + bound_margin
+        max_y = nuclei[:, 1].max() - bound_margin
 
-    def recombine(self, e_group, h_mob):
-        # e_group è VGroup(e_dot, glow)
-        e_dot = e_group[0]
-        center = e_dot.get_center()
-        ring = Circle(radius=0.10, stroke_width=4, color=YELLOW).move_to(center)
-        self.play(
-            AnimationGroup(
-                ring.animate.scale(3.0).set_stroke(opacity=0.0),
-                FadeOut(e_group),
-                FadeOut(h_mob),
-                lag_ratio=0.0,
-            ),
-            run_time=0.45,
-        )
+        v = np.zeros(3)
+
+        def repulsion(x):
+            r = x - nuclei
+            r[:, 2] = 0
+            r2 = np.sum(r[:, :2]**2, axis=1) + 1e-8
+            denom = (r2 + a * a) ** ((p + 2) / 2)
+            return (k_rep * (a**p) * r / denom[:, None]).sum(axis=0)
+
+        def updater(m, dt):
+            nonlocal v
+            dt = max(dt, 1e-3)
+            x = m.get_center()
+
+            F = g_vec + repulsion(x)
+            noise = np.sqrt(2 * D * dt) * np.array([np.random.normal(), np.random.normal(), 0])
+            v[:] = v + (F - gamma * v) * dt + noise
+
+            speed = np.linalg.norm(v[:2])
+            if speed > max_speed:
+                v[:] *= max_speed / speed
+
+            x_new = x + v * dt
+            if x_new[0] < min_x or x_new[0] > max_x:
+                v[0] *= -0.7
+            if x_new[1] < min_y or x_new[1] > max_y:
+                v[1] *= -0.7
+
+            m.move_to(x + v * dt)
+
+        e_dot.add_updater(updater)
