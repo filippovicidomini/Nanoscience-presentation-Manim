@@ -62,7 +62,7 @@ class PNJunctionLED(Scene):
         x_label.next_to(axes, DOWN, buff=0.3)
         y_label.next_to(axes, LEFT, buff=0.3).shift(UP * 1.5)
 
-        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), run_time=1.4)
+        self.play(Create(axes), FadeIn(x_label), FadeIn(y_label), run_time=4)
 
         # -------------------------------------------------
         # Bands (slightly curved like the previous scene)
@@ -149,13 +149,13 @@ class PNJunctionLED(Scene):
                 AnimationGroup(
                     e.animate.move_to(recomb_point + UP * (0.0 + dy)).set_rate_func(rate_functions.ease_in_out_cubic),
                     h.animate.move_to(recomb_point + DOWN * (0.0 - dy)).set_rate_func(rate_functions.ease_in_out_cubic),
-                    run_time=0.55,
+                    run_time=0.95,
                 ),
                 AnimationGroup(
                     FadeOut(e, run_time=0.10),
                     FadeOut(h, run_time=0.10),
                     photon_pulse(photon_color, recomb_point, max_scale=15.8),
-                    run_time=0.70,
+                    run_time=0.90,
                 ),
             )
 
@@ -168,12 +168,12 @@ class PNJunctionLED(Scene):
             self.play(recomb_event(dy, COL_PHOTON_RED), run_time=1.10)
 
         # Phase 2: ramp up (more frequent)
-        run_stream(COL_PHOTON_RED, n_events=10, lag_ratio=0.22, run_time=3.2)
+        run_stream(COL_PHOTON_RED, n_events=10, lag_ratio=0.22, run_time=5.2)
 
         # Phase 3: near-continuous stream (overlapping events -> continuous red light)
-        run_stream(COL_PHOTON_RED, n_events=50, lag_ratio=0.08, run_time=8.0)
+        run_stream(COL_PHOTON_RED, n_events=100, lag_ratio=0.08, run_time=20.0)
 
-        self.wait(0.6)
+        self.wait(3)
 
         # -------------------------------------------------
         # Bandgap → photon color: animate the gap changing (red → green → blue)
@@ -217,11 +217,11 @@ class PNJunctionLED(Scene):
             else:
                 anims.append(Transform(cap_now, cap))
 
-            self.play(*anims, run_time=1.2, rate_func=rate_functions.ease_in_out_cubic)
+            self.play(*anims, run_time=5, rate_func=rate_functions.ease_in_out_cubic)
             cap_now = cap
 
             # Continuous emission at the new bandgap (short stream)
-            run_stream(c, n_events=14, lag_ratio=0.08, run_time=2.4)
+            run_stream(c, n_events=100, lag_ratio=0.08, run_time=10)
             self.wait(0.25)
 
         self.wait(1.0)

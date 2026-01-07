@@ -212,7 +212,15 @@ After contact, at equilibrium, carriers diffuse and leave behind fixed charges i
 Under forward bias, the external voltage reduces the built-in potential. In the band diagram, that means the bending is weaker and the barrier height decreases. With a lower barrier, carriers can cross the junction more easily: electrons from the n-side and holes from the p-side are injected across, producing a large current.
 Under reverse bias, the external voltage strengthens the built-in potential. The band bending becomes stronger and the barrier increases, widening the depletion region and making carrier injection extremely unlikely. In this condition, the junction blocks current (aside from a tiny leakage current not shown here).
 
+= Light Emitting Diode (LED)
+In this scene we use the energy-band picture to explain how a PN junction becomes a light source. The conduction band E_c and the valence band E_v are shown versus position, with a small band bending consistent with forward bias.
 
+Under forward bias, electrons are injected into the p-side and holes are injected into the n-side. In the active region near the junction, an electron can drop from the conduction band down toward the valence band and recombine with a hole.
+That transition releases energy. In a direct bandgap semiconductor, the released energy is emitted efficiently as a photon. The expanding circular wave represents that light emission event.
+The crucial idea is that the photon energy is approximately the bandgap energy:
+$E_gamma approx E_g = E_c - E_v$
+So when the bandgap is small, the photon has lower energy and longer wavelength (red). When the bandgap increases, the emitted photons become higher energy and shift to shorter wavelengths (green, then blue).
+The last part of the animation makes this explicit by increasing the $E_c–E_v$ separation and showing the corresponding color change in the emitted light.
 
 
 
