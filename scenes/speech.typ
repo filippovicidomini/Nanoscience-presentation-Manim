@@ -309,7 +309,7 @@ The last part of the animation makes this explicit by increasing the $E_c–E_v$
 == on video
 [0–10 s] – Forward bias and carrier injection
 “In this scene we use the energy-band picture to explain how a PN junction becomes a light source.
-The conduction band E_c and the valence band E_v are shown versus position, with a small band bending consistent with forward bias.
+The conduction band $E_c$ and the valence band $E_v$ are shown versus position, with a small band bending consistent with forward bias.
 Under forward bias, electrons are injected into the p-side and holes are injected into the n-side.
 In the active region near the junction, an electron can drop from the conduction band down toward the valence band and recombine with a hole.”
 
