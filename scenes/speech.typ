@@ -2,7 +2,7 @@
 #set par(justify: true)
 #set par(first-line-indent: 1.5em)
 #set text(size: 14pt, font: "Libertinus Serif")
-#set page(numbering: "1")
+#set page(numbering: "1", margin: 2cm)
 #set document(
   title: [From Silicon to Light ],
   author: "Filippo Vicidomini",
@@ -210,17 +210,20 @@ Once injected, these carriers move across the junction and recombine, and the re
 
 == on video
 [0–8 s] – Applying forward bias
+
 “Now we apply forward bias: the p-side is connected to the positive terminal
 and the n-side to the negative terminal.
 This external voltage partially cancels the built-in potential.”
 
 [8–16 s] – Depletion region shrinks
+
 “Visually, the depletion region shrinks because the barrier is reduced.
 With a lower barrier, majority carriers can cross the junction more easily:
 electrons are injected from the n-side into the p-side,
 and holes are injected from the p-side into the n-side.”
 
 [16–28 s] – Carrier injection
+
 “Once injected, these carriers move across the junction and recombine.
 The result is a large current.
 This is why a diode conducts strongly in forward bias:
@@ -233,17 +236,20 @@ Visually, the depletion region widens because the barrier is increased. With a h
 As a result, very few carriers can cross the junction, leading to a very small current. This is why a diode blocks current in reverse bias: the junction acts as a strong barrier preventing carrier flow.
 == on video
 [0–8 s] – Applying reverse bias
+
 “Now we apply reverse bias: the p-side is connected to the negative terminal
 and the n-side to the positive terminal.
 This external voltage adds to the built-in potential.”
 
 [8–16 s] – Depletion region widens
+
 “Visually, the depletion region widens because the barrier is increased.
 With a higher barrier, majority carriers find it much harder to cross the junction:
 electrons on the n-side are pulled away from the junction,
 and holes on the p-side are also pulled away.”
 
 [16–28 s] – Carrier blocking
+
 “As a result, very few carriers can cross the junction, leading to a very small current.
 This is why a diode blocks current in reverse bias:
 the junction acts as a strong barrier preventing carrier flow.”
@@ -308,6 +314,7 @@ So when the bandgap is small, the photon has lower energy and longer wavelength 
 The last part of the animation makes this explicit by increasing the $E_c–E_v$ separation and showing the corresponding color change in the emitted light.
 == on video
 [0–10 s] – Forward bias and carrier injection
+
 “In this scene we use the energy-band picture to explain how a PN junction becomes a light source.
 The conduction band $E_c$ and the valence band $E_v$ are shown versus position, with a small band bending consistent with forward bias.
 Under forward bias, electrons are injected into the p-side and holes are injected into the n-side.
@@ -315,16 +322,25 @@ In the active region near the junction, an electron can drop from the conduction
 
 [10–22 s] – Photon emission
 “That transition releases energy.
+
 In a direct bandgap semiconductor, the released energy is emitted efficiently as a photon.
 The expanding circular wave represents that light emission event.”
 
 [22–34 s] – Photon energy and bandgap
+
 “The crucial idea is that the photon energy is approximately the bandgap energy:
 $E_gamma approx E_g = E_c - E_v$
 So when the bandgap is small, the photon has lower energy and longer wavelength (red).
-When the bandgap increases, the emitted photons become higher energy and shift to shorter wavelengths (green, then blue).”
+When the bandgap increases, the emitted photons become higher energy and shift to shorter wavelengths (green, then blue).
+
+The development of efficient blue LEDs was so challenging
+that it led to the Nobel Prize in Physics,
+awarded for enabling high-energy bandgap semiconductors
+and modern white LED lighting,
+through the work of researchers such as Shuji Nakamura.”
 
 [34–48 s] – Color change with bandgap
+
 “The last part of the animation makes this explicit by increasing the $E_c–E_v$ separation
 and showing the corresponding color change in the emitted light.”
 
@@ -340,19 +356,23 @@ The zoom around $0 V$ highlights that the current does not “jump” abruptly: 
 This is why the I–V characteristic is a compact, measurable summary of the junction’s internal potential barrier.
 == on video
 [0–10 s] – Reverse bias
+
 “In reverse bias (negative voltage), the depletion region widens and the barrier increases.
 Majority carriers are pulled away from the junction, so almost no current flows — only a tiny leakage current.
 At sufficiently large reverse voltage, the diode can enter reverse breakdown, where the reverse current increases rapidly (shown here as a conceptual marker).”
 
 [10–22 s] – Forward bias
+
 “In forward bias (positive voltage), the external voltage lowers the barrier and narrows the depletion region.
 Once the applied voltage approaches the knee voltage (around $0.7 V$ for silicon), carrier injection becomes efficient and the current rises exponentially.”
 
 [22–34 s] – Zoom around 0 V
+
 “The zoom around $0 V$ highlights that the current does not jump abruptly: it increases smoothly,
 but the exponential growth makes it look like a sharp turn on a large scale.”
 
 [34–48 s] – Summary
+
 “This is why the I–V characteristic is a compact, measurable summary of the junction’s internal potential barrier.”
 
 
